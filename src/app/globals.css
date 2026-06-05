@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+
+@custom-variant dark (&:is(.dark *));
+
+/* INI PETANYA: Agar Tailwind V4 paham kelas warna kita */
+@theme {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-border: hsl(var(--border));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+
+@layer base {
+  :root {
+    --background: 240 30% 98%;
+    --foreground: 224 40% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 40% 12%;
+    --primary: 262 80% 60%;
+    --primary-foreground: 0 0% 100%;
+    --border: 240 20% 90%;
+    --muted: 240 20% 95%;
+    --muted-foreground: 240 10% 45%;
+    --radius: 1.5rem;
+  }
+
+  .dark {
+    --background: 224 40% 6%;
+    --foreground: 210 40% 98%;
+    --card: 224 40% 10%;
+    --card-foreground: 210 40% 98%;
+    --primary: 262 80% 65%;
+    --primary-foreground: 0 0% 100%;
+    --border: 224 30% 18%;
+    --muted: 224 30% 12%;
+    --muted-foreground: 215 20% 65%;
+  }
+}
+
+/* Hilangkan Scrollbar */
+::-webkit-scrollbar { display: none; width: 0; }
+* { -ms-overflow-style: none; scrollbar-width: none; }
