@@ -21,25 +21,40 @@ export default function DashboardPage() {
   const periodDays = daysMap[user.allowancePeriod] || 30;
   
   // 1. Hitung Sisa Hari (Days Left) secara dinamis
-  const today = new Date().getDate();
+  const todayDateObj = new Date();
+  const today = todayDateObj.getDate();
   const allowanceDateNum = parseInt(user.allowanceDate || '1', 10);
   let daysLeft = periodDays;
+  let cycleStartDate = new Date(todayDateObj);
   
   if (user.allowancePeriod === 'monthly') {
     if (allowanceDateNum > today) {
       daysLeft = allowanceDateNum - today; // Gajian bulan ini belum lewat
+      cycleStartDate = new Date(todayDateObj.getFullYear(), todayDateObj.getMonth() - 1, allowanceDateNum);
     } else {
       // Gajian bulan depan
-      const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+      const daysInMonth = new Date(todayDateObj.getFullYear(), todayDateObj.getMonth() + 1, 0).getDate();
       daysLeft = (daysInMonth - today) + allowanceDateNum;
+      cycleStartDate = new Date(todayDateObj.getFullYear(), todayDateObj.getMonth(), allowanceDateNum);
     }
   } else {
     // Untuk mingguan/dwi-mingguan
     daysLeft = Math.max(1, periodDays - (today % periodDays));
+    cycleStartDate.setDate(todayDateObj.getDate() - (today % periodDays));
   }
   daysLeft = Math.max(1, daysLeft); // Hindari pembagian dengan 0
 
-  // 2. Hitung Tanggungan (Hutang + Tabungan)
+  // 2. Hitung Pengeluaran Siklus Ini
+  const spentThisCycle = (transactions || [])
+    .filter(t => t.type === 'expense' && new Date(t.date) >= cycleStartDate)
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  // 3. Hitung Sisa Jatah dari Target Pemasukan
+  const remainingAllowance = user.allowanceAmount > 0 
+    ? Math.max(0, user.allowanceAmount - spentThisCycle)
+    : balance; // Jika tidak diset, gunakan seluruh balance
+
+  // 4. Hitung Tanggungan (Hutang + Tabungan)
   const totalUnpaidDebts = (debts || []).filter(d => !d.isPaid).reduce((sum, d) => sum + d.amount, 0);
   
   const totalUnmetGoals = (goals || []).reduce((sum, g) => {
@@ -50,12 +65,15 @@ export default function DashboardPage() {
   // Amankan maksimal 30% dari saldo untuk tabungan agar Sisa Jatah tidak langsung Rp 0
   const reserveForGoals = Math.min(totalUnmetGoals, balance * 0.3);
 
-  // 3. Kalkulasi Sisa Uang Aman (Sisakan 5% dana darurat absolut)
+  // 5. Kalkulasi Sisa Uang Aman (Sisakan 5% dana darurat absolut)
   const emergencyReserve = (user.allowanceAmount || 0) * 0.05;
   const safeBalance = Math.max(0, balance - totalUnpaidDebts - reserveForGoals - emergencyReserve);
+  
+  // Ambil nilai terkecil antara (Sisa Saldo Asli) vs (Sisa Jatah Pemasukan)
+  const effectiveSafeBalance = user.allowanceAmount > 0 ? Math.min(safeBalance, remainingAllowance) : safeBalance;
 
-  // 4. Batas Harian
-  const calculatedSafeLimit = Math.floor(safeBalance / daysLeft);
+  // 6. Batas Harian
+  const calculatedSafeLimit = Math.floor(effectiveSafeBalance / daysLeft);
   const isManualLimit = user.customSafeLimit?.isManual || false;
   const safeLimit = isManualLimit ? (user.customSafeLimit?.amount || calculatedSafeLimit) : calculatedSafeLimit;
 
@@ -326,12 +344,12 @@ export default function DashboardPage() {
               </div>
             )}
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 mt-4">
               <button onClick={() => setIsLimitModalOpen(false)} className="flex-1 h-12 bg-muted text-foreground font-bold rounded-xl hover:bg-border transition-colors">
                 {t('cancel')}
               </button>
               <button onClick={handleSaveLimit} className="flex-1 h-12 bg-primary text-primary-foreground font-bold rounded-xl shadow-md flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-95">
-                <CheckCircle2 size={18} /> {t('saveSettings')}
+                <CheckCircle2 size={18} /> {t('save')}
               </button>
             </div>
           </div>
