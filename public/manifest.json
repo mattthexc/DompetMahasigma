@@ -33,5 +33,18 @@
   "categories": ["finance", "productivity"],
   "lang": "id",
   "dir": "ltr",
-  "prefer_related_applications": false
+  "scope": "/",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "iarc_rating_id": "e",
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "shortcuts": [
+    {
+      "name": "Catat Transaksi",
+      "short_name": "Catat",
+      "description": "Catat pengeluaran baru",
+      "url": "/dashboard",
+      "icons": [{ "src": "/icon-1024x1024.png", "sizes": "1024x1024" }]
+    }
+  ]
 }
