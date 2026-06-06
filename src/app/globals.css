@@ -34,25 +34,30 @@
   }
 
   .dark {
-    --background: 224 40% 6%;
+    --background: 240 6% 4%;
     --foreground: 210 40% 98%;
-    --card: 224 40% 10%;
+    --card: 240 6% 8%;
     --card-foreground: 210 40% 98%;
     --primary: 262 80% 65%;
     --primary-foreground: 0 0% 100%;
-    --border: 224 30% 18%;
-    --muted: 224 30% 12%;
+    --border: 240 6% 14%;
+    --muted: 240 6% 12%;
     --muted-foreground: 215 20% 65%;
   }
 }
 
 /* Hilangkan Scrollbar & Tap Highlight */
-::-webkit-scrollbar { display: none; width: 0; }
-* { 
-  -ms-overflow-style: none; 
-  scrollbar-width: none; 
+::-webkit-scrollbar {
+  display: none;
+  width: 0;
+}
+
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
   -webkit-tap-highlight-color: transparent;
 }
+
 *:focus {
   outline: none;
 }

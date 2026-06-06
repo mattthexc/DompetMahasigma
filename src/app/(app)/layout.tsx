@@ -39,10 +39,34 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [theme]);
 
   useEffect(() => {
-    if (mounted && fontSize) {
-      document.documentElement.style.fontSize = `${fontSize}px`;
-    }
-  }, [mounted, fontSize]);
+    if (!mounted) return;
+    
+    // Fungsi untuk auto-scale berdasarkan lebar device secara mulus
+    const handleResize = () => {
+      const width = window.innerWidth;
+      const root = document.documentElement;
+      
+      // Asumsi desain ideal di layar lebar 390px dengan font dasar 16px.
+      // Jika layar lebih kecil/besar, base font disesuaikan secara proporsional.
+      // Kita batasi maksimum 448px (max-w-md di desain kita).
+      const effectiveWidth = Math.min(width, 448);
+      
+      // Hitung proporsi font size
+      let calculatedFontSize = (effectiveWidth / 390) * 16;
+      
+      // Batasi font size agar tidak terlalu kecil di HP lipat/jadul dan tidak terlalu besar
+      calculatedFontSize = Math.max(12, Math.min(18, calculatedFontSize));
+      
+      root.style.fontSize = `${calculatedFontSize}px`;
+      
+      // Reset properti zoom ke standar, karena scaling pakai fontSize lebih stabil lintas browser
+      root.style.setProperty('zoom', '1');
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [mounted]);
 
   useEffect(() => {
     if (mounted && isLoggedIn && !initialNotifShown) {

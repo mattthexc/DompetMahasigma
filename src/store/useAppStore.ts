@@ -40,26 +40,27 @@ interface AppState {
   syncToCloud: () => void;
   logout: () => void;
   resetData: () => void;
-  
+
   updateUser: (data: Partial<AppState['user']>) => void;
   addXp: (amount: number) => void;
-  
+
   addWallet: (wallet: Omit<Wallet, 'id'>) => void;
   updateWallet: (id: string, data: Partial<Wallet>) => void;
   deleteWallet: (id: string) => void;
-  
+
   addTransaction: (tx: Omit<Transaction, 'id'>) => boolean;
   deleteTransaction: (id: string) => void;
-  
+  updateTransactionWallet: (txId: string, newWalletId: string) => void;
+
   addCategory: (cat: Omit<Category, 'id'>) => void;
   updateCategory: (id: string, data: Partial<Category>) => void;
   deleteCategory: (id: string) => void;
-  
+
   addGoal: (goal: Omit<Goal, 'id' | 'currentAmount'>) => void;
   updateGoal: (id: string, data: Partial<Goal>) => void;
   deleteGoal: (id: string) => void;
   addGoalProgress: (id: string, amount: number) => boolean;
-  
+
   addChatMessage: (msg: ChatMessage) => void;
   clearChat: () => void;
 
@@ -104,7 +105,7 @@ export const useAppStore = create<AppState>()(
       setLanguage: (language) => { set({ language }); get().syncToCloud(); },
       setFontSize: (fontSize) => { set({ fontSize }); get().syncToCloud(); },
       loginWithCloud: (uid, data) => set({ uid, isLoggedIn: true, ...data }),
-      
+
       syncToCloud: async () => {
         const state = get();
         if (!state.uid) return;
@@ -117,7 +118,7 @@ export const useAppStore = create<AppState>()(
           const sanitize = (obj: any) => JSON.parse(JSON.stringify(obj));
 
           await setDoc(userRef, sanitize({ profile: state.user, theme: state.theme, language: state.language || 'id', fontSize: state.fontSize || 16, updatedAt: new Date().toISOString() }), { merge: true });
-          await setDoc(financeRef, sanitize({ balance: state.balance, wallets: state.wallets || [], transactions: state.transactions, categories: state.categories, goals: state.goals, debts: state.debts, notifications: state.notifications || [] }), { merge: true });
+          await setDoc(financeRef, sanitize({ balance: state.balance, transactions: state.transactions, categories: state.categories, goals: state.goals, debts: state.debts, notifications: state.notifications || [] }), { merge: true });
           await setDoc(chatRef, sanitize({ messages: state.chatMessages }), { merge: true });
         } catch (e) { console.error("Gagal Sync ke Cloud", e); }
       },
@@ -133,7 +134,7 @@ export const useAppStore = create<AppState>()(
         set({ ...initialState, theme: currentTheme, isLoggedIn: false, uid: null });
         localStorage.removeItem('dompet-mahasigma-storage');
       },
-      
+
       updateUser: (data) => { set((state) => ({ user: { ...state.user, ...data } })); get().syncToCloud(); },
       addXp: (amount) => { set((state) => ({ user: { ...state.user, xp: (state.user.xp || 0) + amount } })); get().syncToCloud(); },
       
@@ -147,20 +148,20 @@ export const useAppStore = create<AppState>()(
         }); 
         get().syncToCloud(); 
       },
-      
+
       addTransaction: (tx) => {
         const state = get();
         const isDeduction = tx.type === 'expense' || tx.type === 'debt_lend' || tx.type === 'saving';
         if (isDeduction && tx.amount > state.balance) return false;
         const newBalance = isDeduction ? state.balance - tx.amount : state.balance + tx.amount;
-        
+
         // Pengecekan Budget Limit (80% dan 100%)
         if (tx.type === 'expense') {
           const category = state.categories.find(c => c.name === tx.category);
           if (category) {
             const currentSpent = state.transactions.filter(t => t.category === tx.category && t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
             const newSpent = currentSpent + tx.amount;
-            
+
             if (newSpent > category.limitAmount && currentSpent <= category.limitAmount) {
               get().addNotification({ title: 'Batas Anggaran Terlewati!', message: `Pengeluaran "${tx.category}" sudah melampaui batas anggaran (Rp ${category.limitAmount.toLocaleString('id-ID')}).`, type: 'budget' });
             } else if (newSpent >= category.limitAmount * 0.8 && currentSpent < category.limitAmount * 0.8) {
@@ -181,35 +182,32 @@ export const useAppStore = create<AppState>()(
         }
 
         set((state) => ({ balance: newBalance, wallets: newWallets, transactions: [{ ...tx, id: Date.now().toString(), date: new Date().toISOString() }, ...state.transactions] }));
-        
-        // GAMIFIKASI: Beri 10 XP setiap kali nyatet
         get().addXp(10);
-        
         get().syncToCloud(); return true;
       },
-      
+
       deleteTransaction: (id) => {
         set((state) => {
           const txToDelete = state.transactions.find(tx => tx.id === id);
           if (!txToDelete) return state;
           const isDeduction = txToDelete.type === 'expense' || txToDelete.type === 'debt_lend' || txToDelete.type === 'saving';
           const newBalance = isDeduction ? state.balance + txToDelete.amount : state.balance - txToDelete.amount;
-          
+
           let newDebts = state.debts || [];
           if (txToDelete.type === 'debt_lend') {
-             // Cari debt yang belum dibayar dengan nominal sama dan nama peminjam sama
-             newDebts = newDebts.filter(d => !(d.amount === txToDelete.amount && !d.isPaid && `Dipinjam: ${d.borrowerName}` === txToDelete.title));
+            // Cari debt yang belum dibayar dengan nominal sama dan nama peminjam sama
+            newDebts = newDebts.filter(d => !(d.amount === txToDelete.amount && !d.isPaid && `Dipinjam: ${d.borrowerName}` === txToDelete.title));
           }
 
           let newGoals = state.goals || [];
           if (txToDelete.type === 'saving') {
-             // Kurangi currentAmount pada goal yang terkait
-             newGoals = newGoals.map(g => {
-                if (`Nabung: ${g.name}` === txToDelete.title) {
-                   return { ...g, currentAmount: Math.max(0, g.currentAmount - txToDelete.amount) };
-                }
-                return g;
-             });
+            // Kurangi currentAmount pada goal yang terkait
+            newGoals = newGoals.map(g => {
+              if (`Nabung: ${g.name}` === txToDelete.title) {
+                return { ...g, currentAmount: Math.max(0, g.currentAmount - txToDelete.amount) };
+              }
+              return g;
+            });
           }
 
           let newWallets = state.wallets || [];
@@ -230,6 +228,37 @@ export const useAppStore = create<AppState>()(
             goals: newGoals
           };
         }); get().syncToCloud();
+      },
+
+      updateTransactionWallet: (txId, newWalletId) => {
+        set((state) => {
+          const tx = state.transactions.find(t => t.id === txId);
+          if (!tx) return state;
+          
+          const oldWalletId = tx.walletId;
+          if (oldWalletId === newWalletId) return state;
+
+          const isDeduction = tx.type === 'expense' || tx.type === 'debt_lend' || tx.type === 'saving';
+          
+          let newWallets = state.wallets || [];
+          if (newWallets.length === 0) {
+             newWallets = [{ id: '1', name: 'Dompet Utama', balance: state.balance, icon: '💰', isPrimary: true }];
+          }
+
+          if (oldWalletId) {
+             newWallets = newWallets.map(w => w.id === oldWalletId ? { ...w, balance: isDeduction ? w.balance + tx.amount : w.balance - tx.amount } : w);
+          } else {
+             newWallets = newWallets.map(w => w.isPrimary ? { ...w, balance: isDeduction ? w.balance + tx.amount : w.balance - tx.amount } : w);
+          }
+
+          newWallets = newWallets.map(w => w.id === newWalletId ? { ...w, balance: isDeduction ? w.balance - tx.amount : w.balance + tx.amount } : w);
+
+          return {
+            wallets: newWallets,
+            transactions: state.transactions.map(t => t.id === txId ? { ...t, walletId: newWalletId } : t)
+          };
+        });
+        get().syncToCloud();
       },
 
       addCategory: (cat) => { set((state) => ({ categories: [...state.categories, { ...cat, id: Date.now().toString() }] })); get().syncToCloud(); },
@@ -261,7 +290,7 @@ export const useAppStore = create<AppState>()(
       addDebt: (debt) => {
         const state = get();
         if (debt.amount > state.balance) return false; // Gak bisa minjemin kalo saldo kurang
-        
+
         const newTransaction: Transaction = { id: Date.now().toString(), title: `Dipinjam: ${debt.borrowerName}`, amount: debt.amount, category: 'Hutang', type: 'debt_lend', date: new Date().toISOString() };
         set((state) => ({
           balance: state.balance - debt.amount,
@@ -274,7 +303,7 @@ export const useAppStore = create<AppState>()(
         set((state) => {
           const debt = (state.debts || []).find(d => d.id === id);
           if (!debt || debt.isPaid) return state;
-          
+
           const newTransaction: Transaction = { id: Date.now().toString(), title: `Dibayar: ${debt.borrowerName}`, amount: debt.amount, category: 'Hutang', type: 'income', date: new Date().toISOString() };
           return {
             balance: state.balance + debt.amount,
@@ -287,7 +316,7 @@ export const useAppStore = create<AppState>()(
         set((state) => ({ debts: (state.debts || []).filter(d => d.id !== id) }));
         get().syncToCloud();
       },
-      
+
       addNotification: (notif) => {
         const newNotif = { ...notif, id: Date.now().toString(), date: new Date().toISOString(), isRead: false };
         set(state => ({ notifications: [newNotif, ...(state.notifications || [])] }));

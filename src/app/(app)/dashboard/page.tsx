@@ -1,11 +1,10 @@
 'use client';
 
 import { useAppStore } from '@/store/useAppStore';
-import { ArrowUpRight, ArrowDownRight, Wallet, Settings, PieChart as ChartIcon, Zap, Bot, Bell, Info, SlidersHorizontal, CheckCircle2, Loader2, Sparkles, AlertTriangle } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Wallet, Settings, PieChart as ChartIcon, Zap, Bot, Bell, Info, SlidersHorizontal, CheckCircle2, Loader2, Eye, EyeOff, Trophy, ChevronRight } from 'lucide-react';
 import AddTransactionModal from '@/components/AddTransactionModal';
 import Link from 'next/link';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { AlertModal } from '@/components/CustomUI';
 import { useTranslation, translateCategory } from '@/lib/i18n';
@@ -17,17 +16,17 @@ export default function DashboardPage() {
   const { t, language } = useTranslation();
   const dateLocale = language === 'id' ? localeId : localeEn;
   const { user, updateUser, balance, categories, transactions, addTransaction, addDebt, notifications, markNotificationRead, clearNotifications, debts, goals } = useAppStore();
-  
+
   const daysMap = { weekly: 7, biweekly: 14, monthly: 30 };
   const periodDays = daysMap[user.allowancePeriod] || 30;
-  
+
   // 1. Hitung Sisa Hari (Days Left) secara dinamis
   const todayDateObj = new Date();
   const today = todayDateObj.getDate();
   const allowanceDateNum = parseInt(user.allowanceDate || '1', 10);
   let daysLeft = periodDays;
   let cycleStartDate = new Date(todayDateObj);
-  
+
   if (user.allowancePeriod === 'monthly') {
     if (allowanceDateNum > today) {
       daysLeft = allowanceDateNum - today; // Gajian bulan ini belum lewat
@@ -51,13 +50,13 @@ export default function DashboardPage() {
     .reduce((sum, t) => sum + t.amount, 0);
 
   // 3. Hitung Sisa Jatah dari Target Pemasukan
-  const remainingAllowance = user.allowanceAmount > 0 
+  const remainingAllowance = user.allowanceAmount > 0
     ? Math.max(0, user.allowanceAmount - spentThisCycle)
     : balance; // Jika tidak diset, gunakan seluruh balance
 
   // 4. Hitung Tanggungan (Hutang + Tabungan)
   const totalUnpaidDebts = (debts || []).filter(d => !d.isPaid).reduce((sum, d) => sum + d.amount, 0);
-  
+
   const totalUnmetGoals = (goals || []).reduce((sum, g) => {
     const shortage = g.targetAmount - g.currentAmount;
     return sum + (shortage > 0 ? shortage : 0);
@@ -69,7 +68,7 @@ export default function DashboardPage() {
   // 5. Kalkulasi Sisa Uang Aman (Sisakan 5% dana darurat absolut)
   const emergencyReserve = (user.allowanceAmount || 0) * 0.05;
   const safeBalance = Math.max(0, balance - totalUnpaidDebts - reserveForGoals - emergencyReserve);
-  
+
   // Ambil nilai terkecil antara (Sisa Saldo Asli) vs (Sisa Jatah Pemasukan)
   const effectiveSafeBalance = user.allowanceAmount > 0 ? Math.min(safeBalance, remainingAllowance) : safeBalance;
 
@@ -78,19 +77,29 @@ export default function DashboardPage() {
   const isManualLimit = user.customSafeLimit?.isManual || false;
   const safeLimit = isManualLimit ? (user.customSafeLimit?.amount || calculatedSafeLimit) : calculatedSafeLimit;
 
-  // Gamifikasi
-  const currentLevel = Math.floor((user.xp || 0) / 100) + 1;
-  const ranks = ["Sigma Pemula", "Sigma Hustler", "Sigma Boss", "Sigma God", "Sigma CEO"];
-  const currentRank = ranks[Math.min(currentLevel - 1, ranks.length - 1)];
-  
-  const isPanicMode = safeLimit < 20000 && balance > 0;
-
   const [smartInput, setSmartInput] = useState('');
   const [alertData, setAlertData] = useState({ isOpen: false, title: '', message: '', isError: false });
   const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
   const [tempManualLimit, setTempManualLimit] = useState(false);
   const [tempLimitAmount, setTempLimitAmount] = useState('');
   const [isSmartLoading, setIsSmartLoading] = useState(false);
+  const [isBalanceHidden, setIsBalanceHidden] = useState(false);
+
+  const currentXp = user.xp || 0;
+  const currentLevel = Math.floor(currentXp / 100) + 1;
+  const rankNames = ["Sigma Pemula", "Sigma Hustler", "Sigma Boss", "Sigma God", "Sigma CEO"];
+  const currentRank = rankNames[Math.min(currentLevel - 1, rankNames.length - 1)];
+
+  useEffect(() => {
+    const savedHidden = localStorage.getItem('isBalanceHidden') === 'true';
+    setIsBalanceHidden(savedHidden);
+  }, []);
+
+  const toggleBalance = () => {
+    const newVal = !isBalanceHidden;
+    setIsBalanceHidden(newVal);
+    localStorage.setItem('isBalanceHidden', String(newVal));
+  };
 
   const unreadCount = (notifications || []).filter(n => !n.isRead).length;
 
@@ -135,16 +144,16 @@ export default function DashboardPage() {
       }
 
       let success = false;
-      
+
       if (data.type === 'debt_lend') {
         success = addDebt({ borrowerName: data.title, amount: data.amount });
       } else {
-        success = addTransaction({ 
-          title: data.title, 
-          amount: data.amount, 
-          type: data.type, 
-          category: data.category || (data.type.includes('debt') ? 'Hutang' : categories[0]?.name || 'Umum'), 
-          date: new Date().toISOString() 
+        success = addTransaction({
+          title: data.title,
+          amount: data.amount,
+          type: data.type,
+          category: data.category || (data.type.includes('debt') ? 'Hutang' : categories[0]?.name || 'Umum'),
+          date: new Date().toISOString()
         });
       }
 
@@ -171,10 +180,10 @@ export default function DashboardPage() {
   const COLORS = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#ef4444'];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 pt-0 space-y-6">
       {/* 1. TOP BAR */}
-      <div className="flex justify-between items-center mt-2">
-        <div className="flex items-center gap-3">
+      <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-md pt-6 pb-4 -mx-6 px-6 flex justify-between items-center border-b border-border/50">
+        <div className="flex items-center gap-3 bg-card p-1.5 pr-4 rounded-full shadow-sm border border-border">
           <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black text-xl shadow-inner overflow-hidden border border-primary/20 shrink-0">
             {/* FIX FOTO GOOGLE: Tambahkan referrerPolicy="no-referrer" */}
             {user.avatarUrl ? (
@@ -183,16 +192,15 @@ export default function DashboardPage() {
               <span>{user.name.charAt(0).toUpperCase()}</span>
             )}
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{t('welcome')}</p>
-            <h1 className="text-xl font-black text-foreground tracking-tight truncate">{user.name}</h1>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-[9px] font-extrabold bg-primary text-primary-foreground px-2 py-0.5 rounded-full uppercase tracking-wider">Lv.{currentLevel} {currentRank}</span>
-              <span className="text-[10px] font-bold text-muted-foreground">{user.xp || 0} XP</span>
-            </div>
+          <div className="min-w-0 flex flex-col justify-center">
+            <h1 className="text-sm font-black text-foreground tracking-tight truncate">{user.name}</h1>
+            <Link href="/leveling" className="inline-flex items-center gap-1.5 mt-0.5 px-2 py-0.5 bg-primary/10 hover:bg-primary/20 transition-colors rounded-full cursor-pointer">
+              <span className="text-[9px] font-extrabold bg-primary text-primary-foreground px-1.5 rounded-full uppercase tracking-wider">Lv.{currentLevel}</span>
+              <span className="text-[10px] font-bold text-primary truncate max-w-[80px]">{currentRank}</span>
+            </Link>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2 shrink-0">
           <Link href="/notifications" className="relative w-10 h-10 bg-amber-500/10 text-amber-500 rounded-xl border border-amber-500/20 flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-sm">
             <Bell size={20} />
@@ -208,23 +216,19 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 2. BALANCE CARD (PANIC MODE AWARE) */}
-      <div className={cn("rounded-3xl p-6 text-white shadow-lg relative overflow-hidden transition-colors", isPanicMode ? "bg-rose-600 dark:bg-rose-900" : "bg-[#00aed6] dark:bg-[#1e293b]")}>
-        <div className="flex justify-between items-start relative z-10">
-          <div className="flex items-center gap-2 opacity-90">
-            <Wallet size={16} className="text-white" />
-            <span className="text-xs font-bold uppercase tracking-wider">{t('balance')}</span>
-          </div>
-          {isPanicMode && (
-            <span className="flex items-center gap-1 text-[10px] font-black bg-black/20 px-2 py-1 rounded-lg uppercase tracking-wider animate-pulse">
-              <AlertTriangle size={12} /> Krisis!
-            </span>
-          )}
+      {/* 2. BALANCE CARD */}
+      <div className="bg-[#00aed6] dark:bg-[#1e293b] rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
+        <div className="flex items-center gap-2 opacity-90 relative z-10">
+          <Wallet size={16} className="text-white" />
+          <span className="text-xs font-bold uppercase tracking-wider">{t('balance')}</span>
+          <button onClick={toggleBalance} className="ml-2 p-1 rounded-full hover:bg-white/20 transition-colors">
+            {isBalanceHidden ? <EyeOff size={14} className="text-white/80" /> : <Eye size={14} className="text-white/80" />}
+          </button>
         </div>
         <h2 className="text-4xl font-black mt-2 tracking-tight relative z-10">
-          Rp {balance.toLocaleString('id-ID')}
+          {isBalanceHidden ? 'Rp •••••••' : `Rp ${balance.toLocaleString('id-ID')}`}
         </h2>
-        
+
         <div className="mt-5 pt-4 border-t border-white/20 flex justify-between items-center text-xs relative z-10">
           <div className="flex items-center gap-2">
             <span className="opacity-90 font-medium">{t('safeLimit')} ({daysLeft} {t('daysLeftText')})</span>
@@ -237,32 +241,14 @@ export default function DashboardPage() {
             Rp {safeLimit.toLocaleString('id-ID')} / {t('day')}
           </span>
         </div>
-        {isPanicMode && (
-          <div className="mt-4 pt-3 border-t border-white/20 relative z-10 flex items-start gap-2">
-            <Info size={16} className="shrink-0 mt-0.5 opacity-80" />
-            <p className="text-[10px] font-medium leading-relaxed opacity-90">Jatah harianmu di bawah Rp 20rb! Segera kurangin ngopi, perbanyak puasa sunnah, atau telpon orang tua. 🚨</p>
-          </div>
-        )}
         <div className="absolute -top-12 -right-10 w-40 h-40 bg-white/10 rounded-full blur-lg pointer-events-none"></div>
         <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-black/10 rounded-full blur-md pointer-events-none"></div>
       </div>
 
-      {daysLeft <= 3 && balance > 0 && (
-        <Link href="/wrapped" className="block w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-4 rounded-3xl text-white shadow-md transition-transform hover:scale-[1.02] active:scale-95">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-black text-sm flex items-center gap-1"><Sparkles size={16}/> Sigma Wrapped Akhir Bulan!</h3>
-              <p className="text-xs font-medium opacity-90 mt-0.5">Lihat rekap keren dosamu bulan ini.</p>
-            </div>
-            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"><ArrowUpRight size={18}/></div>
-          </div>
-        </Link>
-      )}
-
       {/* 3. TRITUNGGAL LOGIS */}
       <div className="flex gap-3">
-        <AddTransactionModal 
-          initialType="expense" 
+        <AddTransactionModal
+          initialType="expense"
           trigger={
             <button className="flex-1 h-24 rounded-3xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 flex flex-col items-center justify-center gap-2 transition-all active:scale-95 transform-gpu shadow-sm">
               <div className="w-10 h-10 bg-rose-500 text-white rounded-full flex items-center justify-center shadow-md">
@@ -270,10 +256,10 @@ export default function DashboardPage() {
               </div>
               <span className="text-[11px] font-extrabold text-rose-700 dark:text-rose-400 uppercase tracking-wider">{t('expense')}</span>
             </button>
-          } 
+          }
         />
-        <AddTransactionModal 
-          initialType="income" 
+        <AddTransactionModal
+          initialType="income"
           trigger={
             <button className="flex-1 h-24 rounded-3xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 flex flex-col items-center justify-center gap-2 transition-all active:scale-95 transform-gpu shadow-sm">
               <div className="w-10 h-10 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-md">
@@ -281,7 +267,7 @@ export default function DashboardPage() {
               </div>
               <span className="text-[11px] font-extrabold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">{t('income')}</span>
             </button>
-          } 
+          }
         />
         <Link href="/chat" className="flex-1 h-24 rounded-3xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 flex flex-col items-center justify-center gap-2 transition-all active:scale-95 transform-gpu shadow-sm">
           <div className="w-10 h-10 bg-indigo-500 text-white rounded-full flex items-center justify-center shadow-md">
