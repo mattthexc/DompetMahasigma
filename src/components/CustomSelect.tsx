@@ -38,7 +38,7 @@ export function CustomSelect({ value, onChange, options, placeholder = 'Pilih sa
           <ChevronDown className="text-muted-foreground" size={18} />
         </button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md w-full rounded-t-[2.5rem] sm:rounded-3xl p-6 pb-8 bg-card border-t border-border shadow-[0_-20px_50px_-12px_rgba(0,0,0,0.25)] overflow-hidden flex flex-col max-h-[85vh] fixed bottom-0 sm:relative sm:bottom-auto mb-0 mx-0 inset-x-0 data-[state=closed]:slide-out-to-bottom-[100%] data-[state=open]:slide-in-from-bottom-[100%] transition-transform duration-300">
+      <DialogContent className="sm:max-w-md w-full rounded-t-[2.5rem] sm:rounded-3xl p-6 pb-8 bg-card border-t border-border shadow-[0_-20px_50px_-12px_rgba(0,0,0,0.25)] overflow-hidden flex flex-col max-h-[85vh] fixed !bottom-0 !top-auto !translate-x-0 !translate-y-0 !left-0 !right-0 mx-auto sm:!relative sm:!top-auto sm:!left-auto sm:!translate-x-0 sm:!translate-y-0 sm:!bottom-auto mb-0 data-[state=closed]:slide-out-to-bottom-[100%] data-[state=open]:slide-in-from-bottom-[100%] transition-transform duration-300">
         <div className="w-12 h-1.5 bg-muted rounded-full mx-auto mb-4 sm:hidden" />
         <DialogHeader className="mb-2 text-center sm:text-left">
           <DialogTitle className="text-2xl font-black tracking-tight text-foreground">{title}</DialogTitle>
