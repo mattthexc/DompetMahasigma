@@ -116,8 +116,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const showBottomNav = mainTabs.some(tab => pathname === tab || pathname?.startsWith(tab + '/'));
 
   return (
-    <div className="relative h-[100dvh] flex flex-col bg-background">
-      <main className={`flex-1 overflow-y-auto ${showBottomNav ? 'pb-24' : 'pb-0'}`}>
+    <div className="h-[100dvh] flex flex-col relative">
+      <main className={`flex-1 overflow-y-auto min-h-0 ${showBottomNav ? 'pb-24' : 'pb-0'}`}>
         {children}
       </main>
       {showBottomNav && <BottomNav />}
