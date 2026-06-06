@@ -191,7 +191,7 @@ export default function DashboardPage() {
   return (
     <>
       {/* 1. TOP BAR */}
-      <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-md pt-6 pb-4 px-6 flex justify-between items-center border-b border-border/50 shadow-sm">
+      <div className="fixed top-0 z-50 w-full sm:max-w-md sm:mx-auto bg-background/80 backdrop-blur-md pt-6 pb-4 px-6 flex justify-between items-center border-b border-border/50 shadow-sm">
         <div className="flex items-center gap-3 bg-card p-1.5 pr-4 rounded-full shadow-sm border border-border">
           <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black text-xl shadow-inner overflow-hidden border border-primary/20 shrink-0">
             {/* FIX FOTO GOOGLE: Tambahkan referrerPolicy="no-referrer" */}
@@ -225,7 +225,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="p-6 pt-6 space-y-6">
+      <div className="p-6 pt-[104px] space-y-6">
       {/* 2. BALANCE CARD */}
       <div className="bg-[#00aed6] dark:bg-[#1e293b] rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="flex items-center gap-2 opacity-90 relative z-10">
