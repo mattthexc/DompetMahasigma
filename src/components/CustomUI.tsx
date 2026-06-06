@@ -77,7 +77,6 @@ export function CustomDatePicker({ value, onChange, placeholder = "Pilih Tanggal
   today.setHours(0, 0, 0, 0);
 
   const handleSelect = (date: Date) => {
-    if (date < today) return;
     onChange(format(date, 'yyyy-MM-dd'));
     setIsOpen(false);
   };
@@ -102,15 +101,9 @@ export function CustomDatePicker({ value, onChange, placeholder = "Pilih Tanggal
           <DialogDescription className="sr-only">Navigasi kalender untuk memilih tenggat waktu</DialogDescription>
           
           <div className="flex justify-between items-center mb-4 mt-2">
-            <div className="flex gap-1">
-              <button type="button" onClick={() => setCurrentMonth(subYears(currentMonth, 1))} className="p-2 bg-muted hover:bg-border rounded-xl transition-colors"><ChevronsLeft size={18}/></button>
-              <button type="button" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-2 bg-muted hover:bg-border rounded-xl transition-colors"><ChevronLeft size={18}/></button>
-            </div>
-            <span className="font-extrabold text-foreground tracking-tight text-sm uppercase">{format(currentMonth, 'MMM yyyy', { locale: localeId })}</span>
-            <div className="flex gap-1">
-              <button type="button" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-2 bg-muted hover:bg-border rounded-xl transition-colors"><ChevronRight size={18}/></button>
-              <button type="button" onClick={() => setCurrentMonth(addYears(currentMonth, 1))} className="p-2 bg-muted hover:bg-border rounded-xl transition-colors"><ChevronsRight size={18}/></button>
-            </div>
+            <button type="button" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-2 bg-muted hover:bg-border rounded-xl transition-colors"><ChevronLeft size={18}/></button>
+            <span className="font-extrabold text-foreground tracking-tight text-sm uppercase">{format(currentMonth, 'MMMM', { locale: localeId })}</span>
+            <button type="button" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-2 bg-muted hover:bg-border rounded-xl transition-colors"><ChevronRight size={18}/></button>
           </div>
 
           <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-3">
@@ -121,18 +114,14 @@ export function CustomDatePicker({ value, onChange, placeholder = "Pilih Tanggal
             {Array.from({ length: startOfMonth(currentMonth).getDay() }).map((_, i) => <div key={`empty-${i}`} />)}
             {days.map(day => {
               const isSelected = value && isSameDay(day, new Date(value));
-              const isPast = day < today;
 
               return (
                  <button 
                   key={day.toISOString()} 
                   type="button" 
                   onClick={() => handleSelect(day)} 
-                  disabled={isPast}
                   className={`h-10 w-full rounded-xl flex items-center justify-center text-sm font-bold transition-all 
-                    ${isSelected ? 'bg-primary text-primary-foreground shadow-md scale-110' : ''}
-                    ${!isSelected && !isPast ? 'text-foreground hover:bg-muted' : ''}
-                    ${isPast ? 'text-muted-foreground/30 cursor-not-allowed' : ''}
+                    ${isSelected ? 'bg-primary text-primary-foreground shadow-md scale-110' : 'text-foreground hover:bg-muted'}
                   `}
                 >
                   {format(day, 'd')}

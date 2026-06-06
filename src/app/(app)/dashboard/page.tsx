@@ -23,7 +23,16 @@ export default function DashboardPage() {
   // 1. Hitung Sisa Hari (Days Left) secara dinamis
   const todayDateObj = new Date();
   const today = todayDateObj.getDate();
-  const allowanceDateNum = parseInt(user.allowanceDate || '1', 10);
+  
+  let allowanceDateNum = 1;
+  if (user.allowanceDate) {
+    const dObj = new Date(user.allowanceDate);
+    if (!isNaN(dObj.getTime())) {
+      allowanceDateNum = dObj.getDate();
+    } else {
+      allowanceDateNum = parseInt(user.allowanceDate, 10) || 1;
+    }
+  }
   let daysLeft = periodDays;
   let cycleStartDate = new Date(todayDateObj);
 
