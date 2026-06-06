@@ -91,6 +91,7 @@ const dictionary = {
     // Alerts
     understood: 'Mengerti',
     cancel: 'Batal',
+    close: 'Tutup',
     confirm: 'Ya, Lanjutkan',
 
     // Goals (Tabungan)
@@ -223,6 +224,7 @@ const dictionary = {
     // Alerts
     understood: 'Understood',
     cancel: 'Cancel',
+    close: 'Close',
     confirm: 'Yes, Proceed',
 
     // Goals (Tabungan)

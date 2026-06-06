@@ -230,7 +230,10 @@ export default function GoalsPage() {
                               setProgressAmount(val ? new Intl.NumberFormat('id-ID').format(parseInt(val, 10)) : '');
                             }} required placeholder="0" className="w-full h-14 bg-background border-2 border-border rounded-xl px-4 font-black text-xl text-center focus:border-primary focus:outline-none transition-colors" />
                           </div>
-                          <button type="submit" className="w-full h-14 bg-primary text-primary-foreground text-lg font-bold rounded-xl shadow-sm hover:opacity-90 active:scale-95 transition-all">{t('confirmSave')}</button>
+                          <div className="flex gap-3">
+                            <button type="button" onClick={() => setProgressModalOpenFor(null)} className="flex-1 h-14 bg-muted text-foreground text-lg font-bold rounded-xl hover:bg-border transition-colors">{t('cancel')}</button>
+                            <button type="submit" className="flex-1 h-14 bg-primary text-primary-foreground text-lg font-bold rounded-xl shadow-sm hover:opacity-90 active:scale-95 transition-all">{t('confirmSave')}</button>
+                          </div>
                         </form>
                       </DialogContent>
                     </Dialog>

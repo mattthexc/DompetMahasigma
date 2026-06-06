@@ -48,6 +48,10 @@ Output 4: {"title": "Asep", "amount": 100000, "type": "debt_borrow", "category":
 Contoh Input 5: "Hafiz pinjam uang ke saya 10k"
 Output 5: {"title": "Hafiz", "amount": 10000, "type": "debt_lend", "category": "Catatan Utang"}
 
+Contoh Input 6: "Saya meminjam uang ke Budi 100k" ATAU "Pinjam uang ke Budi 100k"
+Output 6: {"title": "Budi", "amount": 100000, "type": "debt_borrow", "category": "Catatan Utang"}
+(Catatan Penting: "Pinjam ke [Nama]" atau "Meminjam ke [Nama]" artinya KITA yang meminjam/berutang DARI mereka, jadi uang MASUK ke kita = debt_borrow).
+
 Analisis input berikut dan kembalikan JSON saja:
 Input: "${input}"`;
 
@@ -72,15 +76,24 @@ Input: "${input}"`;
       lowerInput.includes("minjemin") ||
       (/^[a-z]+\s+(pinjam|minjem|ngutang)/i.test(lowerInput) && !/^(saya|aku|kita)/i.test(lowerInput))
     ) {
-      parsedData.type = "debt_lend";
-      if (!parsedData.category || parsedData.category === "Umum") parsedData.category = "Hutang";
+      // Kecuali jika ada kata "saya pinjam ke" atau semacamnya
+      if (!lowerInput.includes("saya pinjam") && !lowerInput.includes("aku pinjam")) {
+        parsedData.type = "debt_lend";
+        if (!parsedData.category || parsedData.category === "Umum") parsedData.category = "Catatan Utang";
+      }
     }
 
-    // Aturan 2: Jika kalimat diawali dengan "saya pinjam", "aku ngutang"
-    if (/^(saya|aku|kita)\s+(pinjam|minjem|ngutang)/i.test(lowerInput) || lowerInput.includes("dapat pinjaman")) {
+    // Aturan 2: Jika kalimat berbunyi "saya meminjam", "aku ngutang", atau "pinjam ke"
+    if (
+      /(saya|aku|kita)\s+(pinjam|minjem|meminjam|ngutang)/i.test(lowerInput) || 
+      lowerInput.includes("dapat pinjaman") || 
+      lowerInput.includes("pinjam uang ke") || 
+      lowerInput.includes("meminjam uang ke") ||
+      lowerInput.includes("ngutang ke")
+    ) {
       if (!lowerInput.includes("ke saya") && !lowerInput.includes("ke aku")) {
         parsedData.type = "debt_borrow";
-        if (!parsedData.category || parsedData.category === "Umum") parsedData.category = "Hutang";
+        if (!parsedData.category || parsedData.category === "Umum") parsedData.category = "Catatan Utang";
       }
     }
 

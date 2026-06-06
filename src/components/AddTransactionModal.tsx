@@ -8,6 +8,7 @@ import { useAppStore, TransactionType } from '@/store/useAppStore';
 import { ArrowDownRight, ArrowUpRight, HandCoins, Handshake, ChevronDown, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AlertModal } from '@/components/CustomUI';
+import { CustomSelect } from '@/components/CustomSelect';
 
 interface ModalProps { trigger: React.ReactNode; initialType: TransactionType; }
 
@@ -72,15 +73,18 @@ export default function AddTransactionModal({ trigger, initialType }: ModalProps
             {!type.includes('debt') && (
               <div className="space-y-1.5 w-full min-w-0">
                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Pilih Kategori</label>
-                <div className="relative">
-                  <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full h-12 rounded-xl px-4 bg-background border border-border font-bold appearance-none focus:outline-none focus:border-primary text-foreground">
-                    {categories.map((cat) => ( <option key={cat.id} value={cat.name} className="bg-card text-foreground">{cat.icon} {cat.name}</option> ))}
-                  </select>
-                  <ChevronDown className="absolute right-4 top-3.5 text-muted-foreground pointer-events-none" size={18} />
-                </div>
+                <CustomSelect
+                  value={category}
+                  onChange={setCategory}
+                  options={categories.map((cat) => ({ value: cat.name, label: <span className="flex items-center gap-2">{cat.icon} {cat.name}</span> }))}
+                  title="Pilih Kategori"
+                />
               </div>
             )}
-            <Button className="w-full h-12 rounded-xl text-base font-bold shadow-sm mt-2" type="submit">Simpan Catatan</Button>
+            <div className="flex gap-3 pt-2">
+              <Button type="button" variant="outline" className="flex-1 h-12 rounded-xl font-bold border-border text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => setIsOpen(false)}>Batal</Button>
+              <Button className="flex-1 h-12 rounded-xl text-base font-bold shadow-sm" type="submit">Simpan</Button>
+            </div>
           </form>
         </DialogContent>
       </Dialog>

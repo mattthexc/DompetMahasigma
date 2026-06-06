@@ -1,12 +1,13 @@
 'use client';
 
 import { useAppStore, AllowancePeriod } from '@/store/useAppStore';
-import { User, LogOut, ChevronLeft, Save, Moon, Sun, Bell, Camera, ShieldAlert, Edit2, Wallet, Settings2, GraduationCap, Globe, Heart, Type } from 'lucide-react';
+import { User, LogOut, ChevronLeft, Save, Moon, Sun, Bell, Camera, ShieldAlert, Edit2, Wallet, Settings2, GraduationCap, Globe, Heart, Type, Minus, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
-import { ConfirmModal, AlertModal, CustomDatePicker } from '@/components/CustomUI';
+import { CustomDatePicker, AlertModal, ConfirmModal } from '@/components/CustomUI';
+import { CustomSelect } from '@/components/CustomSelect';
 import { useTranslation } from '@/lib/i18n';
 
 const SUMBER_DANA = ["Orang Tua", "Beasiswa", "Gaji Part-Time / Freelance", "Lainnya"];
@@ -28,6 +29,7 @@ export default function ProfilePage() {
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFontModalOpen, setIsFontModalOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'logout' | 'reset' | null>(null);
   const [alertData, setAlertData] = useState({ isOpen: false, title: '', message: '', isError: false });
   const [maxFontSize, setMaxFontSize] = useState(20);
@@ -159,12 +161,12 @@ export default function ProfilePage() {
                   
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t('incomeSourceLabel')}</label>
-                    <div className="relative">
-                      <select value={incomeSource} onChange={(e) => setIncomeSource(e.target.value)} className="w-full h-12 bg-background border border-border rounded-xl px-4 font-bold text-foreground appearance-none focus:border-primary focus:outline-none">
-                        {SUMBER_DANA.map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                      <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-muted-foreground"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>
-                    </div>
+                    <CustomSelect
+                      value={incomeSource}
+                      onChange={setIncomeSource}
+                      options={SUMBER_DANA.map(s => ({ value: s, label: s }))}
+                      title={t('incomeSourceLabel')}
+                    />
                   </div>
 
                   <div className="space-y-1.5">
@@ -175,12 +177,16 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{t('cycle')}</label>
-                      <div className="relative">
-                        <select value={period} onChange={(e) => setPeriod(e.target.value as AllowancePeriod)} className="w-full h-12 bg-background border border-border rounded-xl px-4 text-xs font-bold text-foreground appearance-none focus:border-primary focus:outline-none">
-                          <option value="weekly">{t('weekly')}</option><option value="biweekly">{t('biweekly')}</option><option value="monthly">{t('monthly')}</option>
-                        </select>
-                        <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none text-muted-foreground"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>
-                      </div>
+                      <CustomSelect
+                        value={period}
+                        onChange={(v) => setPeriod(v as AllowancePeriod)}
+                        options={[
+                          { value: 'weekly', label: t('weekly') },
+                          { value: 'biweekly', label: t('biweekly') },
+                          { value: 'monthly', label: t('monthly') }
+                        ]}
+                        title={t('cycle')}
+                      />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{t('estDate')}</label>
@@ -237,7 +243,7 @@ export default function ProfilePage() {
             </div>
             <div className="text-muted-foreground group-hover:text-foreground transition-colors"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
           </Link>
-          <Dialog>
+          <Dialog open={isFontModalOpen} onOpenChange={setIsFontModalOpen}>
             <DialogTrigger asChild>
               <button className="w-full p-4 flex items-center justify-between hover:bg-muted transition-colors text-left group">
                 <div className="flex items-center gap-3">
@@ -250,28 +256,39 @@ export default function ProfilePage() {
                 </div>
               </button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[320px] w-[85vw] rounded-3xl p-6 bg-card border border-border shadow-2xl">
+            <DialogContent className="sm:max-w-md w-[92vw] rounded-3xl p-6 bg-card border border-border shadow-2xl overflow-hidden">
               <DialogHeader>
-                <DialogTitle className="text-xl font-black text-center text-foreground">Aksesibilitas Font</DialogTitle>
-                <DialogDescription className="text-center text-xs mt-1">Sesuaikan ukuran teks agar lebih nyaman dibaca.</DialogDescription>
+                <DialogTitle className="text-xl font-black tracking-tight flex items-center gap-2 text-foreground">
+                  <Type size={22} className="text-primary" /> Aksesibilitas Font
+                </DialogTitle>
+                <DialogDescription className="text-xs mt-1">Sesuaikan ukuran teks agar lebih nyaman dibaca.</DialogDescription>
               </DialogHeader>
               <div className="flex flex-col gap-4 mt-4">
                 <div className="flex items-center justify-between bg-muted/50 p-3 rounded-xl border border-border">
                   <span className="text-xs font-bold text-muted-foreground">Ukuran Saat Ini:</span>
                   <span className="text-xl font-black text-primary">{fontSize || 16}px</span>
                 </div>
-                <input 
-                  type="range" 
-                  min={12} 
-                  max={maxFontSize} 
-                  step={1} 
-                  value={fontSize || 16} 
-                  onChange={(e) => setFontSize(Number(e.target.value))} 
-                  className="w-full accent-primary" 
-                />
-                <div className="flex justify-between text-[10px] text-muted-foreground font-bold">
-                  <span>12px (Kecil)</span>
-                  <span>{maxFontSize}px (Maksimal Layar)</span>
+                
+                <div className="flex items-center justify-between bg-background border border-border rounded-xl p-2 shadow-inner">
+                  <button onClick={() => setFontSize(Math.max(12, (fontSize || 16) - 1))} className="w-14 h-14 bg-muted text-foreground rounded-xl flex items-center justify-center hover:bg-border transition-colors active:scale-95 shadow-sm">
+                    <Minus size={24} strokeWidth={3} />
+                  </button>
+                  <div className="flex flex-col items-center justify-center">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Pratinjau</span>
+                    <span className="font-medium text-foreground transition-all duration-300" style={{ fontSize: `${fontSize || 16}px` }}>Aa</span>
+                  </div>
+                  <button onClick={() => setFontSize(Math.min(maxFontSize, (fontSize || 16) + 1))} className="w-14 h-14 bg-muted text-foreground rounded-xl flex items-center justify-center hover:bg-border transition-colors active:scale-95 shadow-sm">
+                    <Plus size={24} strokeWidth={3} />
+                  </button>
+                </div>
+                
+                <div className="flex justify-between text-[10px] text-muted-foreground font-bold mt-1">
+                  <span>Min: 12px</span>
+                  <span>Maks: {maxFontSize}px</span>
+                </div>
+
+                <div className="pt-2">
+                  <button onClick={() => setIsFontModalOpen(false)} className="w-full h-12 bg-primary text-primary-foreground font-bold rounded-xl shadow-sm hover:opacity-90 active:scale-95 transition-all">{t('close')}</button>
                 </div>
               </div>
             </DialogContent>

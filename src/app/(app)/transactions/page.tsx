@@ -404,6 +404,11 @@ export default function TransactionsPage() {
                   </span>
                 </div>
               </div>
+              <div className="pt-2">
+                <button onClick={() => setSelectedTx(null)} className="w-full h-12 bg-muted text-foreground font-bold rounded-xl hover:bg-border transition-colors mt-2">
+                  {t('close')}
+                </button>
+              </div>
             </div>
           )}
         </DialogContent>

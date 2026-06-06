@@ -326,9 +326,14 @@ export default function DashboardPage() {
               </div>
             )}
 
-            <button onClick={handleSaveLimit} className="w-full h-12 bg-primary text-primary-foreground font-bold rounded-xl shadow-md flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-95">
-              <CheckCircle2 size={18} /> {t('saveSettings')}
-            </button>
+            <div className="flex gap-3">
+              <button onClick={() => setIsLimitModalOpen(false)} className="flex-1 h-12 bg-muted text-foreground font-bold rounded-xl hover:bg-border transition-colors">
+                {t('cancel')}
+              </button>
+              <button onClick={handleSaveLimit} className="flex-1 h-12 bg-primary text-primary-foreground font-bold rounded-xl shadow-md flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-95">
+                <CheckCircle2 size={18} /> {t('saveSettings')}
+              </button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

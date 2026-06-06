@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAppStore, AllowancePeriod } from '@/store/useAppStore';
 import { GraduationCap, ArrowRight, User, Wallet, CalendarDays } from 'lucide-react';
 import { CustomDatePicker } from '@/components/CustomUI';
+import { CustomSelect } from '@/components/CustomSelect';
 
 const KAMPUS_LIST = ["Institut Teknologi Sumatera (ITERA)", "Universitas Indonesia (UI)", "Universitas Gadjah Mada (UGM)", "Institut Teknologi Bandung (ITB)", "Universitas Padjadjaran (UNPAD)", "Universitas Lampung (UNILA)", "Lainnya"];
 const SUMBER_DANA = ["Orang Tua", "Beasiswa", "Gaji Part-Time / Freelance", "Lainnya"];
@@ -75,12 +76,12 @@ export default function OnboardingPage() {
             <h2 className="text-sm font-black text-foreground border-b border-border pb-2 flex items-center gap-2"><User size={16}/> Profil Mahasiswa</h2>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Asal Kampus</label>
-              <div className="relative">
-                <select value={campus} onChange={(e) => setCampus(e.target.value)} className="w-full h-14 bg-background border border-border rounded-xl px-4 font-bold text-foreground appearance-none focus:border-primary focus:outline-none transition-colors truncate pr-10">
-                  {KAMPUS_LIST.map((k) => (<option key={k} value={k}>{k}</option>))}
-                </select>
-                <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-muted-foreground"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>
-              </div>
+              <CustomSelect
+                value={campus}
+                onChange={setCampus}
+                options={KAMPUS_LIST.map(k => ({ value: k, label: k }))}
+                title="Pilih Kampus"
+              />
             </div>
           </div>
 
@@ -90,12 +91,12 @@ export default function OnboardingPage() {
             
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Sumber Dana Utama</label>
-              <div className="relative">
-                <select value={incomeSource} onChange={(e) => setIncomeSource(e.target.value)} className="w-full h-14 bg-background border border-border rounded-xl px-4 font-bold text-foreground appearance-none focus:border-primary focus:outline-none transition-colors">
-                  {SUMBER_DANA.map((s) => (<option key={s} value={s}>{s}</option>))}
-                </select>
-                <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-muted-foreground"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>
-              </div>
+              <CustomSelect
+                value={incomeSource}
+                onChange={setIncomeSource}
+                options={SUMBER_DANA.map(s => ({ value: s, label: s }))}
+                title="Pilih Sumber Dana"
+              />
             </div>
 
             <div className="space-y-1.5">
@@ -106,12 +107,16 @@ export default function OnboardingPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Siklus Turun</label>
-                <div className="relative">
-                  <select value={allowancePeriod} onChange={(e) => setAllowancePeriod(e.target.value as AllowancePeriod)} className="w-full h-14 bg-background border border-border rounded-xl px-4 text-xs font-bold text-foreground appearance-none focus:border-primary focus:outline-none transition-colors">
-                    <option value="weekly">Mingguan</option><option value="biweekly">2 Minggu</option><option value="monthly">Bulanan</option>
-                  </select>
-                  <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-muted-foreground"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>
-                </div>
+                <CustomSelect
+                  value={allowancePeriod}
+                  onChange={(v) => setAllowancePeriod(v as AllowancePeriod)}
+                  options={[
+                    { value: 'weekly', label: 'Mingguan' },
+                    { value: 'biweekly', label: '2 Minggu' },
+                    { value: 'monthly', label: 'Bulanan' }
+                  ]}
+                  title="Pilih Siklus"
+                />
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Estimasi Tanggal</label>
