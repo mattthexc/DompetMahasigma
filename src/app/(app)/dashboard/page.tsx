@@ -44,17 +44,7 @@ export default function DashboardPage() {
   }
   daysLeft = Math.max(1, daysLeft); // Hindari pembagian dengan 0
 
-  // 2. Hitung Pengeluaran Siklus Ini
-  const spentThisCycle = (transactions || [])
-    .filter(t => t.type === 'expense' && new Date(t.date) >= cycleStartDate)
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  // 3. Hitung Sisa Jatah dari Target Pemasukan
-  const remainingAllowance = user.allowanceAmount > 0
-    ? Math.max(0, user.allowanceAmount - spentThisCycle)
-    : balance; // Jika tidak diset, gunakan seluruh balance
-
-  // 4. Hitung Tanggungan (Hutang + Tabungan)
+  // 2. Hitung Tanggungan (Hutang + Tabungan)
   const totalUnpaidDebts = (debts || []).filter(d => !d.isPaid).reduce((sum, d) => sum + d.amount, 0);
 
   const totalUnmetGoals = (goals || []).reduce((sum, g) => {
@@ -62,18 +52,16 @@ export default function DashboardPage() {
     return sum + (shortage > 0 ? shortage : 0);
   }, 0);
 
-  // Amankan maksimal 30% dari saldo untuk tabungan agar Sisa Jatah tidak langsung Rp 0
+  // Amankan maksimal 30% dari saldo untuk tabungan agar Sisa Jatah tidak langsung Rp 0 jika target besar
   const reserveForGoals = Math.min(totalUnmetGoals, balance * 0.3);
 
-  // 5. Kalkulasi Sisa Uang Aman (Sisakan 5% dana darurat absolut)
-  const emergencyReserve = (user.allowanceAmount || 0) * 0.05;
+  // 3. Kalkulasi Sisa Uang Aman
+  // Cadangkan 5% dari saldo asli sebagai dana darurat absolut
+  const emergencyReserve = balance * 0.05;
   const safeBalance = Math.max(0, balance - totalUnpaidDebts - reserveForGoals - emergencyReserve);
 
-  // Ambil nilai terkecil antara (Sisa Saldo Asli) vs (Sisa Jatah Pemasukan)
-  const effectiveSafeBalance = user.allowanceAmount > 0 ? Math.min(safeBalance, remainingAllowance) : safeBalance;
-
-  // 6. Batas Harian
-  const calculatedSafeLimit = Math.floor(effectiveSafeBalance / daysLeft);
+  // 4. Batas Harian
+  const calculatedSafeLimit = Math.floor(safeBalance / daysLeft);
   const isManualLimit = user.customSafeLimit?.isManual || false;
   const safeLimit = isManualLimit ? (user.customSafeLimit?.amount || calculatedSafeLimit) : calculatedSafeLimit;
 
