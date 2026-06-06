@@ -41,34 +41,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!mounted) return;
     
-    // Fungsi untuk auto-scale berdasarkan lebar device secara mulus
-    const handleResize = () => {
-      const width = window.innerWidth;
-      const root = document.documentElement;
-      
-      // Asumsi desain ideal di layar lebar 390px.
-      // Kita batasi maksimum 448px (max-w-md di desain kita).
-      const effectiveWidth = Math.min(width, 448);
-      
-      // Hitung proporsi font size berdasarkan preferensi user (atau default 16)
-      const baseFontSize = fontSize || 16;
-      let calculatedFontSize = (effectiveWidth / 390) * baseFontSize;
-      
-      // Batasi font size agar tidak terlalu kecil di HP lipat/jadul
-      // tetapi tetap mengakomodasi jika user sengaja memperbesar di Setting
-      const minLimit = Math.min(10, baseFontSize - 4);
-      const maxLimit = Math.max(24, baseFontSize + 4);
-      calculatedFontSize = Math.max(minLimit, Math.min(maxLimit, calculatedFontSize));
-      
-      root.style.fontSize = `${calculatedFontSize}px`;
-      
-      // Reset properti zoom ke standar, karena scaling pakai fontSize lebih stabil lintas browser
-      root.style.setProperty('zoom', '1');
-    };
-
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    // We remove the artificial Javascript layout scaling.
+    // Tailwind and flexbox will naturally fit the device edge-to-edge.
+    const root = document.documentElement;
+    if (fontSize && fontSize !== 16) {
+      root.style.fontSize = `${fontSize}px`;
+    } else {
+      root.style.fontSize = ''; // Reset to browser/OS default
+    }
+    root.style.setProperty('zoom', '1');
+    
   }, [mounted, fontSize]);
 
   useEffect(() => {
