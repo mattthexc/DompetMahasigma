@@ -1,10 +1,11 @@
 'use client';
 
 import { useAppStore } from '@/store/useAppStore';
-import { ArrowUpRight, ArrowDownRight, Wallet, Settings, PieChart as ChartIcon, Zap, Bot, Bell, Info, SlidersHorizontal, CheckCircle2, Loader2 } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Wallet, Settings, PieChart as ChartIcon, Zap, Bot, Bell, Info, SlidersHorizontal, CheckCircle2, Loader2, Sparkles, AlertTriangle } from 'lucide-react';
 import AddTransactionModal from '@/components/AddTransactionModal';
 import Link from 'next/link';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { AlertModal } from '@/components/CustomUI';
 import { useTranslation, translateCategory } from '@/lib/i18n';
@@ -76,6 +77,13 @@ export default function DashboardPage() {
   const calculatedSafeLimit = Math.floor(effectiveSafeBalance / daysLeft);
   const isManualLimit = user.customSafeLimit?.isManual || false;
   const safeLimit = isManualLimit ? (user.customSafeLimit?.amount || calculatedSafeLimit) : calculatedSafeLimit;
+
+  // Gamifikasi
+  const currentLevel = Math.floor((user.xp || 0) / 100) + 1;
+  const ranks = ["Sigma Pemula", "Sigma Hustler", "Sigma Boss", "Sigma God", "Sigma CEO"];
+  const currentRank = ranks[Math.min(currentLevel - 1, ranks.length - 1)];
+  
+  const isPanicMode = safeLimit < 20000 && balance > 0;
 
   const [smartInput, setSmartInput] = useState('');
   const [alertData, setAlertData] = useState({ isOpen: false, title: '', message: '', isError: false });
@@ -175,9 +183,13 @@ export default function DashboardPage() {
               <span>{user.name.charAt(0).toUpperCase()}</span>
             )}
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{t('welcome')}</p>
             <h1 className="text-xl font-black text-foreground tracking-tight truncate">{user.name}</h1>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-[9px] font-extrabold bg-primary text-primary-foreground px-2 py-0.5 rounded-full uppercase tracking-wider">Lv.{currentLevel} {currentRank}</span>
+              <span className="text-[10px] font-bold text-muted-foreground">{user.xp || 0} XP</span>
+            </div>
           </div>
         </div>
         
@@ -196,11 +208,18 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 2. BALANCE CARD */}
-      <div className="bg-[#00aed6] dark:bg-[#1e293b] rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
-        <div className="flex items-center gap-2 opacity-90 relative z-10">
-          <Wallet size={16} className="text-white" />
-          <span className="text-xs font-bold uppercase tracking-wider">{t('balance')}</span>
+      {/* 2. BALANCE CARD (PANIC MODE AWARE) */}
+      <div className={cn("rounded-3xl p-6 text-white shadow-lg relative overflow-hidden transition-colors", isPanicMode ? "bg-rose-600 dark:bg-rose-900" : "bg-[#00aed6] dark:bg-[#1e293b]")}>
+        <div className="flex justify-between items-start relative z-10">
+          <div className="flex items-center gap-2 opacity-90">
+            <Wallet size={16} className="text-white" />
+            <span className="text-xs font-bold uppercase tracking-wider">{t('balance')}</span>
+          </div>
+          {isPanicMode && (
+            <span className="flex items-center gap-1 text-[10px] font-black bg-black/20 px-2 py-1 rounded-lg uppercase tracking-wider animate-pulse">
+              <AlertTriangle size={12} /> Krisis!
+            </span>
+          )}
         </div>
         <h2 className="text-4xl font-black mt-2 tracking-tight relative z-10">
           Rp {balance.toLocaleString('id-ID')}
@@ -218,9 +237,27 @@ export default function DashboardPage() {
             Rp {safeLimit.toLocaleString('id-ID')} / {t('day')}
           </span>
         </div>
+        {isPanicMode && (
+          <div className="mt-4 pt-3 border-t border-white/20 relative z-10 flex items-start gap-2">
+            <Info size={16} className="shrink-0 mt-0.5 opacity-80" />
+            <p className="text-[10px] font-medium leading-relaxed opacity-90">Jatah harianmu di bawah Rp 20rb! Segera kurangin ngopi, perbanyak puasa sunnah, atau telpon orang tua. 🚨</p>
+          </div>
+        )}
         <div className="absolute -top-12 -right-10 w-40 h-40 bg-white/10 rounded-full blur-lg pointer-events-none"></div>
         <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-black/10 rounded-full blur-md pointer-events-none"></div>
       </div>
+
+      {daysLeft <= 3 && balance > 0 && (
+        <Link href="/wrapped" className="block w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-4 rounded-3xl text-white shadow-md transition-transform hover:scale-[1.02] active:scale-95">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-black text-sm flex items-center gap-1"><Sparkles size={16}/> Sigma Wrapped Akhir Bulan!</h3>
+              <p className="text-xs font-medium opacity-90 mt-0.5">Lihat rekap keren dosamu bulan ini.</p>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"><ArrowUpRight size={18}/></div>
+          </div>
+        </Link>
+      )}
 
       {/* 3. TRITUNGGAL LOGIS */}
       <div className="flex gap-3">

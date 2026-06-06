@@ -1,7 +1,7 @@
 'use client';
 
 import { useAppStore, AllowancePeriod } from '@/store/useAppStore';
-import { User, LogOut, ChevronLeft, Save, Moon, Sun, Bell, Camera, ShieldAlert, Edit2, Wallet, Settings2, GraduationCap, Globe, Heart, Type, Minus, Plus } from 'lucide-react';
+import { User, LogOut, ChevronLeft, Save, Moon, Sun, Bell, Camera, ShieldAlert, Edit2, Wallet, Settings2, GraduationCap, Globe, Heart, Type, Minus, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -14,7 +14,7 @@ const SUMBER_DANA = ["Orang Tua", "Beasiswa", "Gaji Part-Time / Freelance", "Lai
 
 export default function ProfilePage() {
   const { t, language } = useTranslation();
-  const { user, updateUser, resetData, theme, setTheme, logout, setLanguage, fontSize, setFontSize } = useAppStore();
+  const { user, updateUser, resetData, theme, setTheme, logout, setLanguage, fontSize, setFontSize, wallets, addWallet, updateWallet, deleteWallet, balance } = useAppStore();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -33,6 +33,14 @@ export default function ProfilePage() {
   const [confirmAction, setConfirmAction] = useState<'logout' | 'reset' | null>(null);
   const [alertData, setAlertData] = useState({ isOpen: false, title: '', message: '', isError: false });
   const [maxFontSize, setMaxFontSize] = useState(20);
+
+  // State Modal Dompet
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
+  const [editingWalletId, setEditingWalletId] = useState<string | null>(null);
+  const [newWalletName, setNewWalletName] = useState('');
+  const [newWalletBalance, setNewWalletBalance] = useState('');
+  const [newWalletIcon, setNewWalletIcon] = useState('💳');
+  const [confirmDeleteWallet, setConfirmDeleteWallet] = useState<string | null>(null);
 
   useEffect(() => {
     const calcMaxFontSize = () => {
@@ -98,6 +106,32 @@ export default function ProfilePage() {
   const executeConfirmAction = () => {
     if (confirmAction === 'logout') { logout(); router.push('/login'); } 
     else if (confirmAction === 'reset') { resetData(); router.push('/login'); }
+  };
+
+  const openWalletModal = (wallet?: any) => {
+    if (wallet) {
+      setEditingWalletId(wallet.id);
+      setNewWalletName(wallet.name);
+      setNewWalletIcon(wallet.icon);
+      setNewWalletBalance(new Intl.NumberFormat('id-ID').format(wallet.balance));
+    } else {
+      setEditingWalletId(null);
+      setNewWalletName('');
+      setNewWalletIcon('💳');
+      setNewWalletBalance('');
+    }
+    setIsWalletModalOpen(true);
+  };
+
+  const handleSaveWallet = () => {
+    const bal = parseInt(newWalletBalance.replace(/\./g, ''), 10) || 0;
+    if (!newWalletName.trim()) return;
+    if (editingWalletId) {
+      updateWallet(editingWalletId, { name: newWalletName, balance: bal, icon: newWalletIcon });
+    } else {
+      addWallet({ name: newWalletName, balance: bal, icon: newWalletIcon, isPrimary: (wallets || []).length === 0 });
+    }
+    setIsWalletModalOpen(false);
   };
 
   const periodSuffix = { weekly: t('weeklySuffix'), biweekly: t('biweeklySuffix'), monthly: t('monthlySuffix') };
@@ -204,6 +238,67 @@ export default function ProfilePage() {
             </Dialog>
           </div>
         </div>
+
+        {/* MANAJEMEN DOMPET */}
+        <div className="space-y-3 pt-4">
+          <div className="flex justify-between items-end px-2">
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Dompet & Saldo</h3>
+            <button onClick={() => openWalletModal()} className="text-[10px] font-bold text-primary flex items-center gap-1"><Plus size={12}/> Tambah</button>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            {wallets?.length > 0 ? wallets.map(w => (
+              <div key={w.id} className="bg-card rounded-2xl border border-border p-3 shadow-sm relative overflow-hidden group cursor-pointer" onClick={() => openWalletModal(w)}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">{w.icon}</span>
+                  <span className="text-xs font-bold text-foreground truncate">{w.name}</span>
+                </div>
+                <h4 className="font-black text-primary text-sm truncate">Rp {w.balance.toLocaleString('id-ID')}</h4>
+                {w.isPrimary && <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-500" />}
+              </div>
+            )) : (
+              <div className="col-span-2 bg-card rounded-2xl border border-border p-4 shadow-sm flex flex-col items-center justify-center text-center gap-2 cursor-pointer" onClick={() => openWalletModal()}>
+                <Wallet size={24} className="text-muted-foreground"/>
+                <p className="text-xs font-bold text-muted-foreground">Belum ada dompet. Tambahkan sekarang!</p>
+              </div>
+            )}
+            
+            <div className="col-span-2 bg-primary/10 rounded-2xl border border-primary/20 p-4 shadow-sm flex justify-between items-center mt-1">
+              <span className="text-xs font-bold text-primary uppercase tracking-wider">Total Kekayaan</span>
+              <span className="font-black text-primary text-lg truncate text-right ml-2">Rp {balance.toLocaleString('id-ID')}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* DIALOG DOMPET */}
+        <Dialog open={isWalletModalOpen} onOpenChange={setIsWalletModalOpen}>
+          <DialogContent className="sm:max-w-[400px] w-[90vw] rounded-3xl p-6 bg-card border border-border shadow-2xl [&>button.absolute]:hidden">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-black text-foreground">{editingWalletId ? 'Edit Dompet' : 'Tambah Dompet'}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 mt-2">
+              <div className="flex gap-3">
+                <div className="w-14 h-14 bg-muted border border-border rounded-xl flex items-center justify-center text-2xl shrink-0">{newWalletIcon}</div>
+                <div className="space-y-1.5 flex-1">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Nama Dompet</label>
+                  <input type="text" value={newWalletName} onChange={(e) => { setNewWalletName(e.target.value); if(e.target.value && newWalletIcon === '💳') setNewWalletIcon('💰'); }} className="w-full h-14 bg-background border border-border rounded-xl px-4 font-bold text-foreground focus:border-primary focus:outline-none" placeholder="Gopay / BCA" />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Saldo Terkini (Rp)</label>
+                <input type="text" inputMode="numeric" value={newWalletBalance} onChange={e => { const val = e.target.value.replace(/\D/g, ''); setNewWalletBalance(val ? new Intl.NumberFormat('id-ID').format(parseInt(val, 10)) : ''); }} className="w-full h-14 bg-background border border-border rounded-xl px-4 font-black text-lg text-foreground focus:border-primary focus:outline-none" placeholder="0" />
+              </div>
+              <div className="flex gap-3 pt-2">
+                {editingWalletId && wallets.length > 1 && (
+                  <button onClick={() => { setIsWalletModalOpen(false); setConfirmDeleteWallet(editingWalletId); }} className="h-12 w-12 shrink-0 bg-rose-500/10 text-rose-500 rounded-xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-colors"><Trash2 size={18} /></button>
+                )}
+                <button onClick={() => setIsWalletModalOpen(false)} className="flex-1 h-12 bg-muted text-foreground font-bold rounded-xl hover:bg-border transition-colors">{t('cancel')}</button>
+                <button onClick={handleSaveWallet} className="flex-1 h-12 bg-primary text-primary-foreground font-bold rounded-xl shadow-sm hover:opacity-90 active:scale-95 transition-all">{t('save')}</button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
       </div>
 
       <div className="space-y-3">

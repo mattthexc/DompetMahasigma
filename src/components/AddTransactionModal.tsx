@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAppStore, TransactionType } from '@/store/useAppStore';
-import { ArrowDownRight, ArrowUpRight, HandCoins, Handshake, ChevronDown, Info } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, HandCoins, Handshake, ChevronDown, Info, Camera, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AlertModal } from '@/components/CustomUI';
 import { CustomSelect } from '@/components/CustomSelect';
@@ -14,12 +14,14 @@ interface ModalProps { trigger: React.ReactNode; initialType: TransactionType; }
 
 export default function AddTransactionModal({ trigger, initialType }: ModalProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const { addTransaction, categories } = useAppStore();
+  const { addTransaction, categories, wallets } = useAppStore();
 
   const [title, setTitle] = useState('');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState<TransactionType>(initialType);
   const [category, setCategory] = useState(categories[0]?.name || 'Umum');
+  const [walletId, setWalletId] = useState(wallets?.find(w => w.isPrimary)?.id || wallets?.[0]?.id || '');
+  const [isScanning, setIsScanning] = useState(false);
 
   const [alertData, setAlertData] = useState({ isOpen: false, title: '', message: '', isError: false });
 
@@ -35,7 +37,7 @@ export default function AddTransactionModal({ trigger, initialType }: ModalProps
     if (!title || !parsedAmount) return;
 
     const finalCategory = (type === 'debt_borrow' || type === 'debt_lend') ? 'Catatan Utang' : category;
-    const success = addTransaction({ title, amount: parsedAmount, type, category: finalCategory, date: new Date().toISOString() });
+    const success = addTransaction({ title, amount: parsedAmount, type, category: finalCategory, date: new Date().toISOString(), walletId });
 
     if (success) { 
       setIsOpen(false); 
@@ -44,6 +46,44 @@ export default function AddTransactionModal({ trigger, initialType }: ModalProps
       setAlertData({ isOpen: true, title: 'Tercatat!', message: `Transaksi "${title}" sebesar Rp ${parsedAmount.toLocaleString('id-ID')} berhasil disimpan.`, isError: false });
     } else { 
       setAlertData({ isOpen: true, title: 'Saldo Kurang', message: 'Saldo utama kamu tidak mencukupi untuk melakukan transaksi keluar sebesar ini.', isError: true });
+    }
+  };
+
+  const handleScanReceipt = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsScanning(true);
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        const base64 = reader.result?.toString().split(',')[1];
+        if (!base64) throw new Error('Gagal membaca gambar');
+
+        const res = await fetch('/api/scan-receipt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: base64 })
+        });
+        
+        if (!res.ok) throw new Error('API Error');
+        const data = await res.json();
+        
+        if (data.title) setTitle(data.title);
+        if (data.amount) setAmount(new Intl.NumberFormat('id-ID').format(data.amount));
+        setType('expense'); // Struk selalu pengeluaran
+        if (data.category && categories.some(c => c.name === data.category)) {
+          setCategory(data.category);
+        } else {
+          setCategory('Makan & Minum');
+        }
+      };
+    } catch (error) {
+      setAlertData({ isOpen: true, title: 'Gagal Scan', message: 'AI gagal membaca struk ini. Pastikan foto terang dan jelas.', isError: true });
+    } finally {
+      setIsScanning(false);
+      if (e.target) e.target.value = ''; // Reset input
     }
   };
 
@@ -81,7 +121,22 @@ export default function AddTransactionModal({ trigger, initialType }: ModalProps
                 />
               </div>
             )}
+            {wallets && wallets.length > 0 && (
+              <div className="space-y-1.5 w-full min-w-0">
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Sumber Dana / Dompet</label>
+                <CustomSelect
+                  value={walletId}
+                  onChange={setWalletId}
+                  options={wallets.map((w) => ({ value: w.id, label: <span className="flex items-center gap-2">{w.icon} {w.name} - Rp {w.balance.toLocaleString('id-ID')}</span> }))}
+                  title="Pilih Dompet"
+                />
+              </div>
+            )}
             <div className="flex gap-3 pt-2">
+              <label className={cn("h-12 w-12 rounded-xl flex items-center justify-center cursor-pointer transition-all shrink-0", isScanning ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary hover:bg-primary hover:text-white border border-primary/20")}>
+                {isScanning ? <Loader2 size={18} className="animate-spin" /> : <Camera size={18} />}
+                <input type="file" accept="image/*" className="hidden" onChange={handleScanReceipt} disabled={isScanning} />
+              </label>
               <Button type="button" variant="outline" className="flex-1 h-12 rounded-xl font-bold border-border text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => setIsOpen(false)}>Batal</Button>
               <Button className="flex-1 h-12 rounded-xl text-base font-bold shadow-sm" type="submit">Simpan</Button>
             </div>

@@ -6,7 +6,8 @@ import { db } from '@/lib/firebase';
 export type TransactionType = 'income' | 'expense' | 'debt_borrow' | 'debt_lend' | 'saving';
 export type AllowancePeriod = 'weekly' | 'biweekly' | 'monthly';
 
-export interface Transaction { id: string; title: string; amount: number; category: string; type: TransactionType; date: string; }
+export interface Wallet { id: string; name: string; balance: number; icon: string; isPrimary?: boolean; }
+export interface Transaction { id: string; title: string; amount: number; category: string; type: TransactionType; date: string; walletId?: string; }
 export interface Category { id: string; name: string; limitAmount: number; icon: string; period?: 'monthly' | 'cycle'; }
 export interface Goal { id: string; name: string; targetAmount: number; currentAmount: number; icon: string; deadline?: string; }
 export interface ChatMessage { id: string; sender: 'user' | 'ai'; text: string; }
@@ -18,8 +19,9 @@ export interface AppNotification { id: string; title: string; message: string; d
 
 interface AppState {
   uid: string | null;
-  user: { name: string; email?: string; campus?: string; allowanceAmount: number; allowancePeriod: AllowancePeriod; avatarUrl?: string; incomeSource?: string; allowanceDate?: string; customSafeLimit?: { isManual: boolean; amount: number; }; };
+  user: { name: string; email?: string; campus?: string; allowanceAmount: number; allowancePeriod: AllowancePeriod; avatarUrl?: string; incomeSource?: string; allowanceDate?: string; customSafeLimit?: { isManual: boolean; amount: number; }; xp?: number; };
   balance: number;
+  wallets: Wallet[];
   transactions: Transaction[];
   categories: Category[];
   goals: Goal[];
@@ -40,6 +42,12 @@ interface AppState {
   resetData: () => void;
   
   updateUser: (data: Partial<AppState['user']>) => void;
+  addXp: (amount: number) => void;
+  
+  addWallet: (wallet: Omit<Wallet, 'id'>) => void;
+  updateWallet: (id: string, data: Partial<Wallet>) => void;
+  deleteWallet: (id: string) => void;
+  
   addTransaction: (tx: Omit<Transaction, 'id'>) => boolean;
   deleteTransaction: (id: string) => void;
   
@@ -69,8 +77,9 @@ interface AppState {
 
 const initialState = {
   uid: null,
-  user: { name: 'Sigma', email: '', campus: '', allowanceAmount: 0, allowancePeriod: 'monthly' as AllowancePeriod, avatarUrl: '', incomeSource: 'Orang Tua', allowanceDate: '' },
+  user: { name: 'Sigma', email: '', campus: '', allowanceAmount: 0, allowancePeriod: 'monthly' as AllowancePeriod, avatarUrl: '', incomeSource: 'Orang Tua', allowanceDate: '', xp: 0 },
   balance: 0,
+  wallets: [],
   transactions: [],
   categories: [
     { id: '1', name: 'Makan & Minum', limitAmount: 600000, icon: '🍔' },
@@ -108,7 +117,7 @@ export const useAppStore = create<AppState>()(
           const sanitize = (obj: any) => JSON.parse(JSON.stringify(obj));
 
           await setDoc(userRef, sanitize({ profile: state.user, theme: state.theme, language: state.language || 'id', fontSize: state.fontSize || 16, updatedAt: new Date().toISOString() }), { merge: true });
-          await setDoc(financeRef, sanitize({ balance: state.balance, transactions: state.transactions, categories: state.categories, goals: state.goals, debts: state.debts, notifications: state.notifications || [] }), { merge: true });
+          await setDoc(financeRef, sanitize({ balance: state.balance, wallets: state.wallets || [], transactions: state.transactions, categories: state.categories, goals: state.goals, debts: state.debts, notifications: state.notifications || [] }), { merge: true });
           await setDoc(chatRef, sanitize({ messages: state.chatMessages }), { merge: true });
         } catch (e) { console.error("Gagal Sync ke Cloud", e); }
       },
@@ -126,6 +135,18 @@ export const useAppStore = create<AppState>()(
       },
       
       updateUser: (data) => { set((state) => ({ user: { ...state.user, ...data } })); get().syncToCloud(); },
+      addXp: (amount) => { set((state) => ({ user: { ...state.user, xp: (state.user.xp || 0) + amount } })); get().syncToCloud(); },
+      
+      addWallet: (wallet) => { set((state) => ({ wallets: [...(state.wallets || []), { ...wallet, id: Date.now().toString() }] })); get().syncToCloud(); },
+      updateWallet: (id, data) => { set((state) => ({ wallets: (state.wallets || []).map(w => w.id === id ? { ...w, ...data } : w) })); get().syncToCloud(); },
+      deleteWallet: (id) => { 
+        set((state) => {
+          const wToDelete = (state.wallets || []).find(w => w.id === id);
+          if (!wToDelete) return state;
+          return { wallets: state.wallets.filter(w => w.id !== id), balance: state.balance - wToDelete.balance };
+        }); 
+        get().syncToCloud(); 
+      },
       
       addTransaction: (tx) => {
         const state = get();
@@ -148,7 +169,22 @@ export const useAppStore = create<AppState>()(
           }
         }
 
-        set((state) => ({ balance: newBalance, transactions: [{ ...tx, id: Date.now().toString(), date: new Date().toISOString() }, ...state.transactions] }));
+        let newWallets = state.wallets || [];
+        if (newWallets.length === 0) {
+           newWallets = [{ id: '1', name: 'Dompet Utama', balance: state.balance, icon: '💰', isPrimary: true }];
+        }
+        
+        if (tx.walletId) {
+           newWallets = newWallets.map(w => w.id === tx.walletId ? { ...w, balance: isDeduction ? w.balance - tx.amount : w.balance + tx.amount } : w);
+        } else {
+           newWallets = newWallets.map(w => w.isPrimary ? { ...w, balance: isDeduction ? w.balance - tx.amount : w.balance + tx.amount } : w);
+        }
+
+        set((state) => ({ balance: newBalance, wallets: newWallets, transactions: [{ ...tx, id: Date.now().toString(), date: new Date().toISOString() }, ...state.transactions] }));
+        
+        // GAMIFIKASI: Beri 10 XP setiap kali nyatet
+        get().addXp(10);
+        
         get().syncToCloud(); return true;
       },
       
@@ -176,8 +212,19 @@ export const useAppStore = create<AppState>()(
              });
           }
 
+          let newWallets = state.wallets || [];
+          if (newWallets.length === 0) {
+             newWallets = [{ id: '1', name: 'Dompet Utama', balance: state.balance, icon: '💰', isPrimary: true }];
+          }
+          if (txToDelete.walletId) {
+             newWallets = newWallets.map(w => w.id === txToDelete.walletId ? { ...w, balance: isDeduction ? w.balance + txToDelete.amount : w.balance - txToDelete.amount } : w);
+          } else {
+             newWallets = newWallets.map(w => w.isPrimary ? { ...w, balance: isDeduction ? w.balance + txToDelete.amount : w.balance - txToDelete.amount } : w);
+          }
+
           return { 
             balance: newBalance, 
+            wallets: newWallets,
             transactions: state.transactions.filter(tx => tx.id !== id),
             debts: newDebts,
             goals: newGoals
