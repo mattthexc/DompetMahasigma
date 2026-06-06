@@ -32,7 +32,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       {/* Background luar dibuat abu-abu/biru gelap agar kontras dengan aplikasinya */}
       <body className={`${inter.className} bg-[#e2e8f0] dark:bg-[#0f172a] flex justify-center min-h-screen antialiased`}>
         {/* Ini adalah kontainer layar HP-nya */}
-        <div className="w-full max-w-md h-[100dvh] bg-background text-foreground sm:shadow-[0_0_50px_-12px_rgba(0,0,0,0.3)] relative overflow-hidden flex flex-col">
+        <div className="w-full h-[100dvh] bg-background text-foreground sm:max-w-md sm:mx-auto sm:shadow-[0_0_50px_-12px_rgba(0,0,0,0.3)] relative overflow-hidden flex flex-col">
           {children}
         </div>
       </body>

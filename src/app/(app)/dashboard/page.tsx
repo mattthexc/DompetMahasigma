@@ -189,9 +189,9 @@ export default function DashboardPage() {
   const COLORS = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#ef4444'];
 
   return (
-    <div className="p-6 pt-0 space-y-6">
+    <>
       {/* 1. TOP BAR */}
-      <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-md pt-6 pb-4 -mx-6 px-6 flex justify-between items-center border-b border-border/50">
+      <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-md pt-6 pb-4 px-6 flex justify-between items-center border-b border-border/50 shadow-sm">
         <div className="flex items-center gap-3 bg-card p-1.5 pr-4 rounded-full shadow-sm border border-border">
           <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black text-xl shadow-inner overflow-hidden border border-primary/20 shrink-0">
             {/* FIX FOTO GOOGLE: Tambahkan referrerPolicy="no-referrer" */}
@@ -225,6 +225,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      <div className="p-6 pt-6 space-y-6">
       {/* 2. BALANCE CARD */}
       <div className="bg-[#00aed6] dark:bg-[#1e293b] rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="flex items-center gap-2 opacity-90 relative z-10">
@@ -337,7 +338,13 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <AlertModal isOpen={alertData.isOpen} onClose={() => setAlertData({ ...alertData, isOpen: false })} title={alertData.title} message={alertData.message} isError={alertData.isError} />
+        <AlertModal
+          isOpen={alertData.isOpen}
+          onClose={() => setAlertData(prev => ({ ...prev, isOpen: false }))}
+          title={alertData.title}
+          message={alertData.message}
+        />
+      </div>
 
       <Dialog open={isLimitModalOpen} onOpenChange={setIsLimitModalOpen}>
         <DialogContent className="sm:max-w-md w-[92vw] rounded-3xl p-6 bg-card border border-border shadow-2xl overflow-hidden">
