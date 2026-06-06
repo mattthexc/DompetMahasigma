@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppStore, AllowancePeriod } from '@/store/useAppStore';
-import { GraduationCap, ArrowRight, User, Wallet, CalendarDays } from 'lucide-react';
+import { GraduationCap, ArrowRight, User, Wallet, CalendarDays, Building2, Banknote, Briefcase, Landmark, ScrollText } from 'lucide-react';
 import { CustomDatePicker } from '@/components/CustomUI';
 import { CustomSelect } from '@/components/CustomSelect';
 
@@ -79,7 +79,17 @@ export default function OnboardingPage() {
               <CustomSelect
                 value={campus}
                 onChange={setCampus}
-                options={KAMPUS_LIST.map(k => ({ value: k, label: k }))}
+                options={KAMPUS_LIST.map(k => ({ 
+                  value: k, 
+                  label: (
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                        <Building2 size={16}/>
+                      </div> 
+                      <span className="text-sm truncate">{k}</span>
+                    </div>
+                  ) 
+                }))}
                 title="Pilih Kampus"
               />
             </div>
@@ -94,7 +104,17 @@ export default function OnboardingPage() {
               <CustomSelect
                 value={incomeSource}
                 onChange={setIncomeSource}
-                options={SUMBER_DANA.map(s => ({ value: s, label: s }))}
+                options={SUMBER_DANA.map(s => ({ 
+                  value: s, 
+                  label: (
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 shrink-0 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                        {s.includes('Gaji') ? <Briefcase size={16}/> : s.includes('Beasiswa') ? <ScrollText size={16}/> : <Banknote size={16}/>}
+                      </div> 
+                      <span className="text-sm truncate">{s}</span>
+                    </div>
+                  ) 
+                }))}
                 title="Pilih Sumber Dana"
               />
             </div>
@@ -111,9 +131,9 @@ export default function OnboardingPage() {
                   value={allowancePeriod}
                   onChange={(v) => setAllowancePeriod(v as AllowancePeriod)}
                   options={[
-                    { value: 'weekly', label: 'Mingguan' },
-                    { value: 'biweekly', label: '2 Minggu' },
-                    { value: 'monthly', label: 'Bulanan' }
+                    { value: 'weekly', label: <div className="flex items-center gap-3"><div className="w-8 h-8 shrink-0 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500"><CalendarDays size={16}/></div> <span className="text-sm">Mingguan</span></div> },
+                    { value: 'biweekly', label: <div className="flex items-center gap-3"><div className="w-8 h-8 shrink-0 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500"><CalendarDays size={16}/></div> <span className="text-sm">2 Minggu</span></div> },
+                    { value: 'monthly', label: <div className="flex items-center gap-3"><div className="w-8 h-8 shrink-0 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500"><CalendarDays size={16}/></div> <span className="text-sm">Bulanan</span></div> }
                   ]}
                   title="Pilih Siklus"
                 />
