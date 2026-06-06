@@ -200,8 +200,8 @@ export default function DashboardPage() {
             Rp {safeLimit.toLocaleString('id-ID')} / {t('day')}
           </span>
         </div>
-        <div className="absolute -top-12 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
-        <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-black/10 rounded-full blur-xl pointer-events-none"></div>
+        <div className="absolute -top-12 -right-10 w-40 h-40 bg-white/10 rounded-full blur-lg pointer-events-none"></div>
+        <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-black/10 rounded-full blur-md pointer-events-none"></div>
       </div>
 
       {/* 3. TRITUNGGAL LOGIS */}
@@ -209,7 +209,7 @@ export default function DashboardPage() {
         <AddTransactionModal 
           initialType="expense" 
           trigger={
-            <button className="flex-1 h-24 rounded-3xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 flex flex-col items-center justify-center gap-2 transition-all active:scale-95 shadow-sm">
+            <button className="flex-1 h-24 rounded-3xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 flex flex-col items-center justify-center gap-2 transition-all active:scale-95 transform-gpu shadow-sm">
               <div className="w-10 h-10 bg-rose-500 text-white rounded-full flex items-center justify-center shadow-md">
                 <ArrowDownRight size={22} strokeWidth={3} />
               </div>
@@ -220,7 +220,7 @@ export default function DashboardPage() {
         <AddTransactionModal 
           initialType="income" 
           trigger={
-            <button className="flex-1 h-24 rounded-3xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 flex flex-col items-center justify-center gap-2 transition-all active:scale-95 shadow-sm">
+            <button className="flex-1 h-24 rounded-3xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 flex flex-col items-center justify-center gap-2 transition-all active:scale-95 transform-gpu shadow-sm">
               <div className="w-10 h-10 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-md">
                 <ArrowUpRight size={22} strokeWidth={3} />
               </div>
@@ -228,7 +228,7 @@ export default function DashboardPage() {
             </button>
           } 
         />
-        <Link href="/chat" className="flex-1 h-24 rounded-3xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 flex flex-col items-center justify-center gap-2 transition-all active:scale-95 shadow-sm">
+        <Link href="/chat" className="flex-1 h-24 rounded-3xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 flex flex-col items-center justify-center gap-2 transition-all active:scale-95 transform-gpu shadow-sm">
           <div className="w-10 h-10 bg-indigo-500 text-white rounded-full flex items-center justify-center shadow-md">
             <Bot size={22} strokeWidth={3} />
           </div>
