@@ -46,16 +46,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       const width = window.innerWidth;
       const root = document.documentElement;
       
-      // Asumsi desain ideal di layar lebar 390px dengan font dasar 16px.
-      // Jika layar lebih kecil/besar, base font disesuaikan secara proporsional.
+      // Asumsi desain ideal di layar lebar 390px.
       // Kita batasi maksimum 448px (max-w-md di desain kita).
       const effectiveWidth = Math.min(width, 448);
       
-      // Hitung proporsi font size
-      let calculatedFontSize = (effectiveWidth / 390) * 16;
+      // Hitung proporsi font size berdasarkan preferensi user (atau default 16)
+      const baseFontSize = fontSize || 16;
+      let calculatedFontSize = (effectiveWidth / 390) * baseFontSize;
       
-      // Batasi font size agar tidak terlalu kecil di HP lipat/jadul dan tidak terlalu besar
-      calculatedFontSize = Math.max(12, Math.min(18, calculatedFontSize));
+      // Batasi font size agar tidak terlalu kecil di HP lipat/jadul
+      // tetapi tetap mengakomodasi jika user sengaja memperbesar di Setting
+      const minLimit = Math.min(10, baseFontSize - 4);
+      const maxLimit = Math.max(24, baseFontSize + 4);
+      calculatedFontSize = Math.max(minLimit, Math.min(maxLimit, calculatedFontSize));
       
       root.style.fontSize = `${calculatedFontSize}px`;
       
@@ -66,7 +69,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [mounted]);
+  }, [mounted, fontSize]);
 
   useEffect(() => {
     if (mounted && isLoggedIn && !initialNotifShown) {
