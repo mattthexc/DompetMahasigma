@@ -1,9 +1,9 @@
 'use client';
 
 import { useAppStore, AllowancePeriod } from '@/store/useAppStore';
-import { User, LogOut, ChevronLeft, Save, Moon, Sun, Bell, Camera, ShieldAlert, Edit2, Wallet, Settings2, GraduationCap, Globe, Heart } from 'lucide-react';
+import { User, LogOut, ChevronLeft, Save, Moon, Sun, Bell, Camera, ShieldAlert, Edit2, Wallet, Settings2, GraduationCap, Globe, Heart, Type } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { ConfirmModal, AlertModal, CustomDatePicker } from '@/components/CustomUI';
@@ -13,7 +13,7 @@ const SUMBER_DANA = ["Orang Tua", "Beasiswa", "Gaji Part-Time / Freelance", "Lai
 
 export default function ProfilePage() {
   const { t, language } = useTranslation();
-  const { user, updateUser, resetData, theme, setTheme, logout, setLanguage } = useAppStore();
+  const { user, updateUser, resetData, theme, setTheme, logout, setLanguage, fontSize, setFontSize } = useAppStore();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -30,6 +30,19 @@ export default function ProfilePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'logout' | 'reset' | null>(null);
   const [alertData, setAlertData] = useState({ isOpen: false, title: '', message: '', isError: false });
+  const [maxFontSize, setMaxFontSize] = useState(20);
+
+  useEffect(() => {
+    const calcMaxFontSize = () => {
+      // Logic menyesuaikan resolusi layar HP dengan batas maksimal lebar container (448px)
+      const maxWidth = Math.min(window.innerWidth, 448);
+      const calculatedMax = Math.floor(maxWidth / 20);
+      setMaxFontSize(Math.min(24, Math.max(18, calculatedMax)));
+    };
+    calcMaxFontSize();
+    window.addEventListener('resize', calcMaxFontSize);
+    return () => window.removeEventListener('resize', calcMaxFontSize);
+  }, []);
 
   const handleSaveAllowance = () => {
     updateUser({ 
@@ -88,13 +101,14 @@ export default function ProfilePage() {
   const periodSuffix = { weekly: t('weeklySuffix'), biweekly: t('biweeklySuffix'), monthly: t('monthlySuffix') };
 
   return (
-    <div className="p-6 space-y-8 pb-6">
-      <div className="flex items-center gap-4 mt-2">
-        <Link href="/dashboard" className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center text-foreground hover:bg-muted transition-colors shadow-sm"><ChevronLeft size={24} /></Link>
+    <div className="pb-6">
+      <div className="sticky top-0 z-30 bg-background/90 backdrop-blur-xl border-b border-border/50 px-6 pt-8 pb-4 flex items-center gap-4">
+        <Link href="/dashboard" className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center text-foreground hover:bg-muted transition-colors shadow-sm shrink-0"><ChevronLeft size={24} /></Link>
         <h1 className="text-2xl font-extrabold text-foreground tracking-tight">{t('settings')}</h1>
       </div>
 
-      <div className="flex flex-col items-center justify-center pt-2 space-y-3">
+      <div className="p-6 space-y-8 pt-4">
+        <div className="flex flex-col items-center justify-center pt-2 space-y-3">
         <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
           <div className="w-24 h-24 rounded-full bg-primary/10 text-primary flex items-center justify-center border-[3px] border-background shadow-md overflow-hidden transition-transform group-hover:scale-105">
             {user.avatarUrl ? <img src={user.avatarUrl} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" /> : <User size={40} strokeWidth={2} />}
@@ -223,6 +237,46 @@ export default function ProfilePage() {
             </div>
             <div className="text-muted-foreground group-hover:text-foreground transition-colors"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
           </Link>
+          <Dialog>
+            <DialogTrigger asChild>
+              <button className="w-full p-4 flex items-center justify-between hover:bg-muted transition-colors text-left group">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-105 transition-transform"><Type size={20} /></div>
+                  <span className="font-bold text-sm text-foreground">Ukuran Font</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-muted-foreground bg-muted px-2 py-1 rounded-md">{fontSize || 16}px</span>
+                  <div className="text-muted-foreground group-hover:text-foreground transition-colors"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
+                </div>
+              </button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[320px] w-[85vw] rounded-3xl p-6 bg-card border border-border shadow-2xl">
+              <DialogHeader>
+                <DialogTitle className="text-xl font-black text-center text-foreground">Aksesibilitas Font</DialogTitle>
+                <DialogDescription className="text-center text-xs mt-1">Sesuaikan ukuran teks agar lebih nyaman dibaca.</DialogDescription>
+              </DialogHeader>
+              <div className="flex flex-col gap-4 mt-4">
+                <div className="flex items-center justify-between bg-muted/50 p-3 rounded-xl border border-border">
+                  <span className="text-xs font-bold text-muted-foreground">Ukuran Saat Ini:</span>
+                  <span className="text-xl font-black text-primary">{fontSize || 16}px</span>
+                </div>
+                <input 
+                  type="range" 
+                  min={12} 
+                  max={maxFontSize} 
+                  step={1} 
+                  value={fontSize || 16} 
+                  onChange={(e) => setFontSize(Number(e.target.value))} 
+                  className="w-full accent-primary" 
+                />
+                <div className="flex justify-between text-[10px] text-muted-foreground font-bold">
+                  <span>12px (Kecil)</span>
+                  <span>{maxFontSize}px (Maksimal Layar)</span>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
         </div>
       </div>
 
@@ -235,8 +289,8 @@ export default function ProfilePage() {
       </div>
 
       <div className="bg-primary/10 border border-primary/20 rounded-3xl p-5 flex flex-col items-center justify-center gap-3 text-center shadow-inner relative overflow-hidden">
-        <div className="absolute -right-4 -top-4 w-16 h-16 bg-primary/20 rounded-full blur-xl"></div>
-        <div className="absolute -left-4 -bottom-4 w-16 h-16 bg-primary/20 rounded-full blur-xl"></div>
+        <div className="absolute -right-4 -top-4 w-16 h-16 bg-primary/20 rounded-full blur-md opacity-50"></div>
+        <div className="absolute -left-4 -bottom-4 w-16 h-16 bg-primary/20 rounded-full blur-md opacity-50"></div>
         <div className="w-12 h-12 bg-card rounded-2xl flex items-center justify-center shadow-sm border border-border z-10">
           <Heart size={24} className="fill-rose-500 text-rose-500 animate-pulse" />
         </div>
@@ -255,6 +309,7 @@ export default function ProfilePage() {
 
       <ConfirmModal isOpen={!!confirmAction} onClose={() => setConfirmAction(null)} onConfirm={executeConfirmAction} title={confirmAction === 'logout' ? t('logoutConfirmTitle') : t('resetConfirmTitle')} message={confirmAction === 'logout' ? t('logoutConfirmDesc') : t('resetConfirmDesc')} confirmText={confirmAction === 'logout' ? t('yesLogout') : t('yesReset')} isDanger={true} />
       <AlertModal isOpen={alertData.isOpen} onClose={() => setAlertData({ ...alertData, isOpen: false })} title={alertData.title} message={alertData.message} isError={alertData.isError} />
+      </div>
     </div>
   );
 }

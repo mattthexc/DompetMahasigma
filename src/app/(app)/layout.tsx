@@ -7,7 +7,7 @@ import { useEffect, useState, useRef } from "react";
 import { AlertModal } from "@/components/CustomUI";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { isLoggedIn, theme, notifications, markNotificationRead, goals, addNotification } = useAppStore();
+  const { isLoggedIn, theme, notifications, markNotificationRead, goals, addNotification, fontSize } = useAppStore();
   const router = useRouter();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
@@ -37,6 +37,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       root.classList.remove('dark');
     }
   }, [theme]);
+
+  useEffect(() => {
+    if (mounted && fontSize) {
+      document.documentElement.style.fontSize = `${fontSize}px`;
+    }
+  }, [mounted, fontSize]);
 
   useEffect(() => {
     if (mounted && isLoggedIn && !initialNotifShown) {

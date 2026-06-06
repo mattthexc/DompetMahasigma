@@ -29,9 +29,11 @@ interface AppState {
   isLoggedIn: boolean;
   theme: 'light' | 'dark';
   language: 'id' | 'en'; // BARU: Pilihan Bahasa
-  
+  fontSize: number; // BARU: Pengaturan Ukuran Font
+
   setTheme: (theme: 'light' | 'dark') => void;
   setLanguage: (language: 'id' | 'en') => void; // BARU
+  setFontSize: (size: number) => void; // BARU
   loginWithCloud: (uid: string, data: any) => void;
   syncToCloud: () => void;
   logout: () => void;
@@ -82,6 +84,7 @@ const initialState = {
   isLoggedIn: false,
   theme: 'light' as const,
   language: 'id' as const,
+  fontSize: 16,
 };
 
 export const useAppStore = create<AppState>()(
@@ -90,6 +93,7 @@ export const useAppStore = create<AppState>()(
       ...initialState,
       setTheme: (theme) => set({ theme }),
       setLanguage: (language) => { set({ language }); get().syncToCloud(); },
+      setFontSize: (fontSize) => { set({ fontSize }); get().syncToCloud(); },
       loginWithCloud: (uid, data) => set({ uid, isLoggedIn: true, ...data }),
       
       syncToCloud: async () => {
@@ -103,7 +107,7 @@ export const useAppStore = create<AppState>()(
           // Sanitasi untuk mencegah error "Unsupported field value: undefined" di Firebase
           const sanitize = (obj: any) => JSON.parse(JSON.stringify(obj));
 
-          await setDoc(userRef, sanitize({ profile: state.user, theme: state.theme, language: state.language || 'id', updatedAt: new Date().toISOString() }), { merge: true });
+          await setDoc(userRef, sanitize({ profile: state.user, theme: state.theme, language: state.language || 'id', fontSize: state.fontSize || 16, updatedAt: new Date().toISOString() }), { merge: true });
           await setDoc(financeRef, sanitize({ balance: state.balance, transactions: state.transactions, categories: state.categories, goals: state.goals, debts: state.debts, notifications: state.notifications || [] }), { merge: true });
           await setDoc(chatRef, sanitize({ messages: state.chatMessages }), { merge: true });
         } catch (e) { console.error("Gagal Sync ke Cloud", e); }
